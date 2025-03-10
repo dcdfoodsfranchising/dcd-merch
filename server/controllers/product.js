@@ -1,4 +1,4 @@
-const Product = require("../models/Product");
+const Product = require("../Models/Product");
 const auth = require('../auth')
 const bcrypt = require('bcryptjs');
 const { errorHandler } = auth;
