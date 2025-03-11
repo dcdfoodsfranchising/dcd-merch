@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/user");
 const passport = require("passport");
-const { verify, verifyAdmin, isLoggedIn } = require("../auth");
+const { verify, verifyAdmin } = require("../auth");
 
 // User registration
 router.post("/register", userController.registerUser);
@@ -19,33 +19,26 @@ router.patch("/:id/set-as-admin", verify, verifyAdmin, userController.updateUser
 // Update password
 router.patch("/update-password", verify, userController.updatePassword);
 
-// Google OAuth Login
+// Google OAuth Login (Redirects user to Google Sign-in)
 router.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 
-// Google OAuth Callback
+// Google callback route (Handles Google response)
 router.get(
-  "/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: "/" }),
-  (req, res) => {
-    res.redirect("/dashboard"); // Redirect after successful login (change to frontend URL)
-  }
+    "/auth/google/callback",
+    passport.authenticate("google", { failureRedirect: "/" }),
+    (req, res) => {
+        res.redirect("/dashboard"); // Change this to your frontend dashboard route
+    }
 );
 
 // Logout route
-router.get("/auth/logout", (req, res) => {
-  req.logout((err) => {
-    if (err) return next(err);
-    res.redirect("/"); // Redirect after logout
-  });
-});
-
-// Get logged-in user details
-router.get("/auth/user", (req, res) => {
-  if (req.isAuthenticated()) {
-    res.json(req.user); // Send user data
-  } else {
-    res.status(401).json({ message: "Not authenticated" });
-  }
+router.get("/logout", (req, res, next) => {
+    req.logout((err) => {
+        if (err) return next(err);
+        req.session.destroy(() => {
+            res.redirect("/"); // Redirect to home page after logout
+        });
+    });
 });
 
 module.exports = router;
