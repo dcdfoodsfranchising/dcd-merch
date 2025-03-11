@@ -27,9 +27,15 @@ router.get(
     "/auth/google/callback",
     passport.authenticate("google", { failureRedirect: "/" }),
     (req, res) => {
-        res.redirect("/"); 
+        console.log("User Data from Google:", req.user);
+        if (!req.user) {
+            console.log("Google OAuth Failed - No user returned");
+            return res.status(500).json({ error: "Authentication failed" });
+        }
+        res.redirect("/");
     }
 );
+
 
 // Logout route
 router.get("/logout", (req, res, next) => {
