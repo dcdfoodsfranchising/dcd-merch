@@ -2,11 +2,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const passport = require("passport");
-const session = require("express-session");
-const MongoStore = require("connect-mongo");
 require("dotenv").config();
-require("./passport"); // Import Passport configuration
 
 // Route Imports
 const userRoutes = require("./routes/user");
@@ -26,23 +22,6 @@ app.use(cors({
     origin: "*",
     credentials: true
 }));
-
-
-// Session Configuration
-app.use(session({
-    secret: process.env.SESSION_SECRET || "defaultSecret",
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({
-        mongoUrl: process.env.MONGODB_STRING, 
-        ttl: 14 * 24 * 60 * 60 
-    })
-}));
-
-
-// Initialize Passport
-app.use(passport.initialize());
-app.use(passport.session());
 
 // Database Connection (Removed Deprecated Options)
 mongoose.connect(process.env.MONGODB_STRING);
