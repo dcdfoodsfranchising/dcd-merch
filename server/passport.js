@@ -10,17 +10,18 @@ passport.use(
             callbackURL: process.env.GOOGLE_CALLBACK_URL
         },
         function (accessToken, refreshToken, profile, done) {
+            console.log("✅ Google OAuth Profile:", profile);
             return done(null, profile);
         }
     )
 );
 
-
-
+// Serialize user
 passport.serializeUser((user, done) => {
     done(null, user);
 });
 
+// Deserialize user
 passport.deserializeUser((user, done) => {
     done(null, user);
 });
