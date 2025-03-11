@@ -22,16 +22,18 @@ app.use(express.urlencoded({ extended: true }));
 
 // CORS Configuration - Allow only specific origins
 app.use(cors({
-    origin: process.env.CLIENT_URL || "http://localhost:3000", // Change this to your frontend URL
+    origin: "*",
     credentials: true
 }));
+
 
 // Session Configuration
 app.use(session({
     secret: process.env.SESSION_SECRET || "defaultSecret",
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: true
 }));
+
 
 // Initialize Passport
 app.use(passport.initialize());
