@@ -27,7 +27,7 @@ router.get(
     "/auth/google/callback",
     passport.authenticate("google", { failureRedirect: "/" }),
     (req, res) => {
-        res.redirect("/dashboard"); // Change this to your frontend dashboard route
+        res.redirect("/"); 
     }
 );
 
