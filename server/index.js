@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const passport = require("passport");
 const session = require("express-session");
+const MongoStore = require("connect-mongo");
 require("dotenv").config();
 require("./passport"); // Import Passport configuration
 
@@ -31,7 +32,11 @@ app.use(cors({
 app.use(session({
     secret: process.env.SESSION_SECRET || "defaultSecret",
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGODB_STRING, 
+        ttl: 14 * 24 * 60 * 60 
+    })
 }));
 
 
