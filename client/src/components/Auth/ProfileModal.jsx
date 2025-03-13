@@ -8,7 +8,7 @@ export default function ProfileModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 px-3">
       <div className="bg-white p-8 rounded-lg shadow-md w-96 relative">
         {/* Close Button */}
         <button
@@ -43,7 +43,7 @@ export default function ProfileModal({ isOpen, onClose }) {
               Already have an account?{" "}
               <span
                 onClick={() => setIsLogin(true)}
-                className="text-blue-600 cursor-pointer hover:underline"
+                className="text-700-600 cursor-pointer hover:underline"
               >
                 Login
               </span>
