@@ -19,7 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // CORS Configuration - Allow only specific origins
 app.use(cors({
-    origin: "*",
+    origin: "https://dcd-merch.vercel.app",
     credentials: true
 }));
 
