@@ -3,8 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import AppNavbar from "./components/AppNavbar";
 import Home from "./pages/Home";
 import { UserProvider } from "./context/UserContext"; 
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Login from "./components/Auth/Login";
+import Register from "./components/Auth/Register";
 
 function App() {
   return (
@@ -13,8 +13,6 @@ function App() {
         <AppNavbar />
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
         </Routes>
       </Router>
     </UserProvider>
