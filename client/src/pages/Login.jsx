@@ -30,7 +30,7 @@ export default function Login() {
               // Update UserContext
               login({ email });  // ✅ Set user state
   
-              toast.success("Login successful!");
+              toast.success("Login successful finally!");
               setTimeout(() => navigate("/"), 1500);
           } else {
               toast.error("Login failed. Please try again.");
