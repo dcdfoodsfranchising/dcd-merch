@@ -68,7 +68,7 @@ module.exports.loginUser = async (req, res) => {
 
         if (isPasswordCorrect) {
             return res.status(201).send({ 
-                accessToken: auth.createAccessToken(user),
+                access: auth.createAccessToken(user),
                 user: { // ✅ Include user details
                     _id: user._id,
                     email: user.email,
