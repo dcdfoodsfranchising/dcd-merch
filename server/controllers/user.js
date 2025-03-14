@@ -68,12 +68,7 @@ module.exports.loginUser = async (req, res) => {
 
         if (isPasswordCorrect) {
             return res.status(201).send({ 
-                access: auth.createAccessToken(user),
-                user: { // ✅ Include user details
-                    _id: user._id,
-                    email: user.email,
-                    isAdmin: user.isAdmin // ✅ Ensure isAdmin is included
-                }
+                access: auth.createAccessToken(user)
             });
         } else {
             return res.status(401).send({ error: 'Email and password do not match' });
