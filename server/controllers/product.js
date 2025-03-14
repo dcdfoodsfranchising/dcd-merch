@@ -15,6 +15,7 @@ module.exports.createProduct = async (req, res) => {
                 name: product.name,
                 description: product.description,
                 price: product.price,
+                image: product.image || "",
                 isActive: product.isActive,
                 id: product._id,
                 createdOn: product.createdOn,
@@ -68,6 +69,7 @@ module.exports.singleProduct = async (req, res) => {
                 name: product.name,
                 description: product.description,
                 price: product.price,
+                image: product.image || "",
                 isActive: product.isActive,
                 createdOn: product.createdOn,
                 __v: product.__v
@@ -93,6 +95,7 @@ module.exports.updateProductInfo = async (req, res) => {
                 name: product.name,
                 description: product.description,
                 price: product.price,
+                image: product.image || "",
                 isActive: product.isActive,
                 createdOn: product.createdOn,
                 __v: product.__v
@@ -121,6 +124,7 @@ module.exports.archiveProduct = async (req, res) => {
                 name: product.name,
                 description: product.description,
                 price: product.price,
+                image: product.image || "",
                 isActive: product.isActive,
                 createdOn: product.createdOn,
                 __v: product.__v
@@ -149,6 +153,7 @@ module.exports.activateProduct = async (req, res) => {
                 name: product.name,
                 description: product.description,
                 price: product.price,
+                image: product.image || "",
                 isActive: product.isActive,
                 createdOn: product.createdOn,
                 __v: product.__v
