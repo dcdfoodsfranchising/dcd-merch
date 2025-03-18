@@ -51,32 +51,37 @@ module.exports.loginUser = async (req, res) => {
         const { email, password } = req.body;
 
         if (!email || !password) {
-            return res.status(400).send({ message: 'Email and password are required' });
+            return res.status(400).send({ message: "Email and password are required" });
         }
 
         if (!email.includes("@")) {
-            return res.status(400).send({ message: 'Invalid email' });
+            return res.status(400).send({ message: "Invalid email" });
         }
 
         const user = await User.findOne({ email });
 
         if (!user) {
-            return res.status(401).send({ error: 'No email found' });
+            return res.status(401).send({ error: "No email found" });
         }
 
         const isPasswordCorrect = bcrypt.compareSync(password, user.password);
 
         if (isPasswordCorrect) {
-            return res.status(201).send({ 
-                access: auth.createAccessToken(user)
+            return res.status(200).send({
+                access: auth.createAccessToken(user),
+                user: {
+                    id: user._id, // Ensure this matches your schema
+                    isAdmin: user.isAdmin
+                }
             });
         } else {
-            return res.status(401).send({ error: 'Email and password do not match' });
+            return res.status(401).send({ error: "Email and password do not match" });
         }
     } catch (err) {
         return errorHandler(err, req, res);
     }
 };
+
 
 
 
