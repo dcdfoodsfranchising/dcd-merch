@@ -1,14 +1,12 @@
 import { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
-import UserContext from "../context/UserContext";
+import  UserContext  from "../context/UserContext";
 
 export default function useNavbarLogic() {
+  const { user } = useContext(UserContext);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
-  const { user, unsetUser } = useContext(UserContext);
-  const navigate = useNavigate();
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
   const toggleProfileDropdown = () => setProfileDropdownOpen(!profileDropdownOpen);
@@ -16,15 +14,14 @@ export default function useNavbarLogic() {
   const closeProfileModal = () => setProfileModalOpen(false);
   const openLogoutModal = () => setLogoutModalOpen(true);
   const closeLogoutModal = () => setLogoutModalOpen(false);
-
   const logout = () => {
-    unsetUser();
-    setLogoutModalOpen(false);
-    navigate("/");
+    localStorage.removeItem("token");
+    window.location.reload();
   };
 
   return {
     user,
+    isAdmin: user?.isAdmin || false,
     menuOpen,
     profileDropdownOpen,
     profileModalOpen,

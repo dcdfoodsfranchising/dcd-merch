@@ -7,6 +7,7 @@ import { UserProvider } from "./context/UserContext";
 import UserContext from "./context/UserContext"; 
 import Login from "./components/Auth/Login";
 import Register from "./components/Auth/Register";
+import AdminSidebar from "./components/AppNavbar/AdminSidebar";
 
 function App() {
   // Global user state
@@ -15,6 +16,11 @@ function App() {
     isAdmin: null
   });
 
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+
+  const toggleSidebar = () => {
+    setIsSidebarExpanded(!isSidebarExpanded);
+  };
 
   useEffect(() => {
     async function fetchUser() {
@@ -47,13 +53,20 @@ function App() {
   return (
     <UserContext.Provider value={{ user, setUser, unsetUser }}>
       <Router>
-        <AppNavbar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-        </Routes>
+        <div className="flex">
+          {user?.isAdmin && <AdminSidebar isExpanded={isSidebarExpanded} toggleSidebar={toggleSidebar} />}
+          <main className={`transition-all duration-300 flex-1 ${user?.isAdmin ? (isSidebarExpanded ? "ml-64" : "ml-20") : "ml-0"}`}>
+            {!user?.isAdmin && <AppNavbar />}
+            <div className="p-6">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+              </Routes>
+            </div>
+          </main>
+        </div>
       </Router>
     </UserContext.Provider>
   );
