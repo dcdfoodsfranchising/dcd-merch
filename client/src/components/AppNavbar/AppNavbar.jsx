@@ -40,7 +40,7 @@ export default function AppNavbar() {
           </button>
 
           {/* Desktop Navigation Icons */}
-          <NavIcons onProfileClick={user.id ? toggleProfileDropdown : openProfileModal} />
+          <NavIcons onProfileClick={user?.id ? toggleProfileDropdown : openProfileModal} />
         </div>
       </nav>
 
@@ -48,7 +48,7 @@ export default function AppNavbar() {
       <MobileMenu menuOpen={menuOpen} toggleMenu={toggleMenu} onProfileClick={openProfileModal} />
 
       {/* Profile Dropdown */}
-      {user.id && profileDropdownOpen && (
+      {user?.id && profileDropdownOpen && (
         <ProfileDropdown onOrdersClick={() => navigate("/orders")} onLogoutClick={openLogoutModal} />
       )}
 

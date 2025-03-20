@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
 import AppNavbar from "./components/AppNavbar/AppNavbar";
 import Home from "./pages/Home";
 import Products from "./pages/Products";
@@ -8,6 +8,24 @@ import UserContext from "./context/UserContext";
 import Login from "./components/Auth/Login";
 import Register from "./components/Auth/Register";
 import AdminSidebar from "./components/AppNavbar/AdminSidebar";
+import ProtectedRoute from "./components/Auth/ProtectedRoute";
+import AdminDashboard from "./pages/AdminDashboard";
+
+function UserRedirector() {
+  const navigate = useNavigate();
+  const { user } = React.useContext(UserContext);
+
+  useEffect(() => {
+    if (!user?.id || !user?.isAdmin) {
+      navigate("/"); // ✅ Redirect if user is not logged in OR is not an admin
+    } else if (user?.isAdmin) {
+      navigate("/dashboard"); // ✅ Redirect admin users to Dashboard
+    }
+  }, [user, navigate]);
+
+  return null;
+}
+
 
 function App() {
   // Global user state
@@ -44,7 +62,6 @@ function App() {
     fetchUser();
   }, []);
 
-  // Function for clearing localStorage on logout
   const unsetUser = () => {
     localStorage.clear();
     setUser({ id: null, isAdmin: null });
@@ -53,17 +70,23 @@ function App() {
   return (
     <UserContext.Provider value={{ user, setUser, unsetUser }}>
       <Router>
+        <UserRedirector /> {/* ✅ Handles navigation logic */}
         <div className="flex">
           {user?.isAdmin && <AdminSidebar isExpanded={isSidebarExpanded} toggleSidebar={toggleSidebar} />}
           <main className={`transition-all duration-300 flex-1 ${user?.isAdmin ? (isSidebarExpanded ? "ml-64" : "ml-20") : "ml-0"}`}>
             {!user?.isAdmin && <AppNavbar />}
             <div className="p-6">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/products" element={<Products />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-              </Routes>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+
+              {/* ✅ Protect admin-only routes */}
+              <Route path="/dashboard" element={<ProtectedRoute component={AdminDashboard} />} />
+              {/* <Route path="/orders" element={<ProtectedRoute component={AdminOrders} />} /> ✅ Make sure this is accessible */}
+            </Routes>
+
             </div>
           </main>
         </div>

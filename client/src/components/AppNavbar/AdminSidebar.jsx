@@ -35,7 +35,7 @@ export default function AdminSidebar({ isExpanded, toggleSidebar }) {
           <li>
             <button
               className={`flex items-center w-full px-4 py-3 hover:bg-gray-700 ${isExpanded ? "justify-start" : "flex-col justify-center"}`}
-              onClick={() => navigate("/admin")}
+              onClick={() => navigate("/dashboard")}
             >
               <FiHome size={24} />
               <span className={`transition-all ${isExpanded ? "ml-4 text-left w-full" : "text-center text-xs mt-1"}`}>
