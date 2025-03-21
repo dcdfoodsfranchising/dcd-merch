@@ -1,42 +1,36 @@
 const Product = require("../Models/Product");
-const auth = require('../middlewares/auth')
-const bcrypt = require('bcryptjs');
+const auth = require('../middlewares/auth');
 const { errorHandler } = auth;
 const cloudinary = require('../config/cloudinary');
-
-
 
 // Create a new product
 module.exports.createProduct = async (req, res) => {
     try {
-        const product = new Product(req.body);
+        const product = new Product({
+            name: req.body.name,
+            description: req.body.description,
+            price: req.body.price,
+            quantity: req.body.quantity || 0,
+            image: req.body.image || "",
+            isFeatured: req.body.isFeatured || false,
+            isActive: req.body.isActive !== undefined ? req.body.isActive : true
+        });
+
         await product.save();
         res.status(201).json({
             message: "Product added successfully",
-            product: {
-                name: product.name,
-                description: product.description,
-                price: product.price,
-                image: product.image || "",
-                isActive: product.isActive,
-                id: product._id,
-                createdOn: product.createdOn,
-                __v: product.__v
-            }
+            product
         });
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
 };
 
-
-
 // Retrieve all products
 module.exports.getAllProducts = async (req, res) => {
     try {
         const products = await Product.find();
         res.status(200).json(products);
-
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -47,7 +41,6 @@ module.exports.activeProducts = async (req, res) => {
     try {
         const products = await Product.find({ isActive: true });
         res.status(200).json(products);
-        
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -56,29 +49,12 @@ module.exports.activeProducts = async (req, res) => {
 // Get Single Product
 module.exports.singleProduct = async (req, res) => {
     try {
-        // Fetch the product by ID from the request parameters
         const product = await Product.findById(req.params.productId);
-
-        // If the product is not found, return a 404 error
         if (!product) {
             return res.status(404).json({ error: 'Product not found' });
         }
-
-        // Return the product details in the expected format
-        res.status(200).json({
-            product: {
-                id: product._id.toString(), 
-                name: product.name,
-                description: product.description,
-                price: product.price,
-                image: product.image || "",
-                isActive: product.isActive,
-                createdOn: product.createdOn,
-                __v: product.__v
-            }
-        });
+        res.status(200).json({ product });
     } catch (error) {
-        // Handle any errors that occur during the process
         res.status(500).json({ error: error.message });
     }
 };
@@ -86,22 +62,17 @@ module.exports.singleProduct = async (req, res) => {
 // Update product info
 module.exports.updateProductInfo = async (req, res) => {
     try {
-        const product = await Product.findByIdAndUpdate(req.params.productId, req.body, { new: true });
+        const product = await Product.findByIdAndUpdate(
+            req.params.productId,
+            req.body,
+            { new: true }
+        );
         if (!product) {
             return res.status(404).json({ error: 'Product not found' });
         }
         res.status(200).json({
-        	message: "Product updated successfully",
-            updatedProduct: {
-                id: product._id,
-                name: product.name,
-                description: product.description,
-                price: product.price,
-                image: product.image || "",
-                isActive: product.isActive,
-                createdOn: product.createdOn,
-                __v: product.__v
-            }
+            message: "Product updated successfully",
+            updatedProduct: product
         });
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -121,16 +92,7 @@ module.exports.archiveProduct = async (req, res) => {
         }
         res.status(200).json({
             message: 'Product archived successfully',
-            archivedProduct: {
-                id: product._id,
-                name: product.name,
-                description: product.description,
-                price: product.price,
-                image: product.image || "",
-                isActive: product.isActive,
-                createdOn: product.createdOn,
-                __v: product.__v
-            }
+            archivedProduct: product
         });
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -150,63 +112,42 @@ module.exports.activateProduct = async (req, res) => {
         }
         res.status(200).json({
             message: "Product activated successfully",
-            activateProduct: {
-                id: product._id,
-                name: product.name,
-                description: product.description,
-                price: product.price,
-                image: product.image || "",
-                isActive: product.isActive,
-                createdOn: product.createdOn,
-                __v: product.__v
-            }
+            activatedProduct: product
         });
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
 };
 
+// Search Products by Name
 module.exports.searchProductsByName = async (req, res) => {
     try {
-        const { productName } = req.body; // Get the product name from the request body
-
-        // Search for products with a matching name (case-insensitive)
+        const { productName } = req.body;
         const products = await Product.find({ name: { $regex: new RegExp(productName, 'i') } });
-
-        if (products.length === 0) {
+        if (!products.length) {
             return res.status(404).json({ message: 'No products found with the specified name' });
         }
-
-        // Respond with the matching products
         res.status(200).json({ message: 'Products found successfully', products });
-
     } catch (error) {
         res.status(500).json({ message: 'Internal Server Error', error });
     }
 };
 
+// Search Products by Price
 module.exports.searchProductsByPrice = async (req, res) => {
     try {
-        const { minPrice, maxPrice } = req.body; // Get minPrice and maxPrice from the request body
-
-        // Search for products within the specified price range
-        const products = await Product.find({
-            price: { $gte: minPrice, $lte: maxPrice }
-        });
-
-        if (products.length === 0) {
+        const { minPrice, maxPrice } = req.body;
+        const products = await Product.find({ price: { $gte: minPrice, $lte: maxPrice } });
+        if (!products.length) {
             return res.status(404).json({ message: 'No products found within the specified price range' });
         }
-
-        // Respond with the matching products
         res.status(200).json({ message: 'Products found successfully', products });
-        
     } catch (error) {
         res.status(500).json({ message: 'Internal Server Error', error });
     }
 };
 
-
+// Toggle Featured Product
 module.exports.toggleFeaturedProduct = async (req, res) => {
     try {
         const product = await Product.findById(req.params.productId);
@@ -221,49 +162,52 @@ module.exports.toggleFeaturedProduct = async (req, res) => {
     }
 };
 
-
+// Upload Product Image
 module.exports.uploadProductImage = async (req, res) => {
     try {
-        // Check if file is uploaded
         if (!req.file) {
             return res.status(400).json({ message: "No image provided" });
         }
-
-        console.log("Uploaded File:", req.file);
-
-        // Return Cloudinary URL
         res.status(200).json({
             message: "Image uploaded successfully",
-            imageUrl: req.file.path // Cloudinary automatically attaches this
+            imageUrl: req.file.path
         });
-
     } catch (error) {
-        console.error("Upload Product Image Error:", error);
         res.status(500).json({ message: "Error uploading image", error });
     }
 };
 
-
+// Delete Product Image
 module.exports.deleteProductImage = async (req, res) => {
     try {
-        const product = await Product.findById(req.params.productId);
-        if (!product) return res.status(404).json({ error: "Product not found" });
+        const productId = req.params.productId;
+        const product = await Product.findById(productId);
 
-        if (!product.image) return res.status(400).json({ error: "No image to delete" });
+        if (!product) {
+            return res.status(404).json({ error: "Product not found" });
+        }
 
-        // Extract public_id from the Cloudinary URL
-        const imagePublicId = product.image.split('/').pop().split('.')[0];
+        if (!product.image) {
+            return res.status(400).json({ error: "No image to delete" });
+        }
+
+        // Extract public_id from the image URL
+        const imageUrl = product.image;
+        const publicId = imageUrl.split('/').pop().split('.')[0]; // Extract filename without extension
 
         // Delete image from Cloudinary
-        await cloudinary.uploader.destroy(`products/${imagePublicId}`);
+        const result = await cloudinary.uploader.destroy(`uploads/${publicId}`);
 
-        // Remove image URL from database
+        if (result.result !== "ok") {
+            return res.status(500).json({ error: "Error deleting image from Cloudinary" });
+        }
+
+        // Remove image reference from product
         product.image = "";
         await product.save();
 
-        res.status(200).json({ message: "Image deleted successfully", product });
+        res.json({ message: "Image deleted successfully" });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
-
