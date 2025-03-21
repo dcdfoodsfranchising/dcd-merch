@@ -1,7 +1,9 @@
 const Product = require("../Models/Product");
-const auth = require('../auth')
+const auth = require('../middlewares/auth')
 const bcrypt = require('bcryptjs');
 const { errorHandler } = auth;
+const cloudinary = require('../config/cloudinary');
+
 
 
 // Create a new product
@@ -204,4 +206,64 @@ module.exports.searchProductsByPrice = async (req, res) => {
     }
 };
 
+
+module.exports.toggleFeaturedProduct = async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.productId);
+        if (!product) return res.status(404).json({ error: "Product not found" });
+
+        product.isFeatured = !product.isFeatured;
+        await product.save();
+
+        res.status(200).json({ message: "Product featured status updated", product });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
+module.exports.uploadProductImage = async (req, res) => {
+    try {
+        // Check if file is uploaded
+        if (!req.file) {
+            return res.status(400).json({ message: "No image provided" });
+        }
+
+        console.log("Uploaded File:", req.file);
+
+        // Return Cloudinary URL
+        res.status(200).json({
+            message: "Image uploaded successfully",
+            imageUrl: req.file.path // Cloudinary automatically attaches this
+        });
+
+    } catch (error) {
+        console.error("Upload Product Image Error:", error);
+        res.status(500).json({ message: "Error uploading image", error });
+    }
+};
+
+
+module.exports.deleteProductImage = async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.productId);
+        if (!product) return res.status(404).json({ error: "Product not found" });
+
+        if (!product.image) return res.status(400).json({ error: "No image to delete" });
+
+        // Extract public_id from the Cloudinary URL
+        const imagePublicId = product.image.split('/').pop().split('.')[0];
+
+        // Delete image from Cloudinary
+        await cloudinary.uploader.destroy(`products/${imagePublicId}`);
+
+        // Remove image URL from database
+        product.image = "";
+        await product.save();
+
+        res.status(200).json({ message: "Image deleted successfully", product });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 

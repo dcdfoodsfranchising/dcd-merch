@@ -1,10 +1,26 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/product');
-const { verify, verifyAdmin, isLoggedIn } = require("../auth");
+const { verify, verifyAdmin } = require("../middlewares/auth");
+const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('../config/cloudinary'); // Import Cloudinary setup
+
+// 🔹 Setup Cloudinary Storage for Multer (Move this BEFORE using multer)
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'uploads', // Change folder name as needed
+    allowed_formats: ['jpg', 'png', 'jpeg'],
+    public_id: (req, file) => file.fieldname + '-' + Date.now(),
+  },
+});
+
+// 🔹 Initialize Multer AFTER defining storage
+const upload = multer({ storage });
 
 // Create a new product
-router.post('/',verify, verifyAdmin, productController.createProduct);
+router.post('/', verify, verifyAdmin, productController.createProduct);
 
 // Get all products
 router.get('/all', verify, verifyAdmin, productController.getAllProducts);
@@ -28,6 +44,15 @@ router.patch('/:productId/activate', verify, verifyAdmin, productController.acti
 router.post('/search-by-name', productController.searchProductsByName);
 
 // Search products by price
-router.post('/search-by-price', productController.searchProductsByPrice)
+router.post('/search-by-price', productController.searchProductsByPrice);
+
+// 📌 Add or Remove Product as Featured
+router.patch('/:productId/feature', verify, verifyAdmin, productController.toggleFeaturedProduct);
+
+// 📌 Upload or Replace Product Image
+router.patch('/:productId/upload-image', verify, verifyAdmin, upload.single('image'), productController.uploadProductImage);
+
+// 📌 Delete Product Image
+router.delete('/:productId/delete-image', verify, verifyAdmin, productController.deleteProductImage);
 
 module.exports = router;

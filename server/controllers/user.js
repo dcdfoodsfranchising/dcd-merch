@@ -1,5 +1,5 @@
 const User = require('../Models/User');
-const auth = require('../auth')
+const auth = require('../middlewares/auth')
 const bcrypt = require('bcryptjs');
 const mongoose = require("mongoose");
 const { errorHandler } = auth;
