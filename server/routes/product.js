@@ -50,7 +50,11 @@ router.post('/search-by-price', productController.searchProductsByPrice);
 router.patch('/:productId/feature', verify, verifyAdmin, productController.toggleFeaturedProduct);
 
 // 📌 Upload or Replace Product Image
-router.patch('/:productId/upload-image', verify, verifyAdmin, upload.single('image'), productController.uploadProductImage);
+router.post(
+    "/:productId/upload-image", verify, verifyAdmin,
+    upload.array("image", 5), // Multer middleware for multiple file uploads
+    productController.uploadProductImages // Ensure this function is properly imported
+);
 
 // 📌 Delete Product Image
 router.delete('/:productId/delete-image', verify, verifyAdmin, productController.deleteProductImage);

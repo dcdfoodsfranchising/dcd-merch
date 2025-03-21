@@ -9,6 +9,7 @@ const userRoutes = require("./routes/user");
 const productRoutes = require("./routes/product");
 const orderRoutes = require("./routes/order");
 const cartRoutes = require("./routes/cart");
+const wishlistRoutes = require("./routes/wishlist");
 
 // Initialize Express App
 const app = express();
@@ -32,7 +33,7 @@ app.use("/users", userRoutes);
 app.use("/products", productRoutes);
 app.use("/orders", orderRoutes);
 app.use("/cart", cartRoutes);
-
+app.use("/wishlist", wishlistRoutes);
 
 // Server Initialization
 const PORT = process.env.PORT || 3000;

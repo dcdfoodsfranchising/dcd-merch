@@ -26,7 +26,11 @@ const userSchema = new mongoose.Schema({
     mobileNo: {
         type: String,
         required: [true, 'Mobile Number is required']
-    }
+    },
+    wishlist: [{
+         type: mongoose.Schema.Types.ObjectId, 
+         ref: "Product" 
+    }]
 });
 
 module.exports = mongoose.model('User', userSchema);

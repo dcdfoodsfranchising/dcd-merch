@@ -163,22 +163,7 @@ module.exports.toggleFeaturedProduct = async (req, res) => {
 };
 
 // Upload Product Image
-module.exports.uploadProductImage = async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ message: "No image provided" });
-        }
-        res.status(200).json({
-            message: "Image uploaded successfully",
-            imageUrl: req.file.path
-        });
-    } catch (error) {
-        res.status(500).json({ message: "Error uploading image", error });
-    }
-};
-
-// Delete Product Image
-module.exports.deleteProductImage = async (req, res) => {
+module.exports.uploadProductImages = async (req, res) => {
     try {
         const productId = req.params.productId;
         const product = await Product.findById(productId);
@@ -187,27 +172,94 @@ module.exports.deleteProductImage = async (req, res) => {
             return res.status(404).json({ error: "Product not found" });
         }
 
-        if (!product.image) {
-            return res.status(400).json({ error: "No image to delete" });
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ error: "No images uploaded" });
         }
 
-        // Extract public_id from the image URL
-        const imageUrl = product.image;
-        const publicId = imageUrl.split('/').pop().split('.')[0]; // Extract filename without extension
+        // Upload all images to Cloudinary and get their URLs
+        const uploadedImages = await Promise.all(
+            req.files.map(async (file) => {
+                const result = await cloudinary.uploader.upload(file.path);
+                return result.secure_url;
+            })
+        );
 
-        // Delete image from Cloudinary
-        const result = await cloudinary.uploader.destroy(`uploads/${publicId}`);
-
-        if (result.result !== "ok") {
-            return res.status(500).json({ error: "Error deleting image from Cloudinary" });
-        }
-
-        // Remove image reference from product
-        product.image = "";
+        // Append new images to the existing images array
+        product.images = [...product.images, ...uploadedImages];
         await product.save();
 
-        res.json({ message: "Image deleted successfully" });
+        res.json({
+            message: "Images uploaded successfully",
+            images: product.images, // Return all images
+        });
     } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            error: "Image upload failed",
+            details: error.message,
+        });
+    }
+};
+
+
+
+// Delete Product Image
+module.exports.deleteProductImage = async (req, res) => {
+    try {
+        const productId = req.params.productId;
+        const { imageUrl } = req.body; // The specific image to delete
+
+        const product = await Product.findById(productId);
+        if (!product) {
+            return res.status(404).json({ error: "Product not found" });
+        }
+
+        if (!product.images || product.images.length === 0) {
+            return res.status(400).json({ error: "No images to delete" });
+        }
+
+        let publicId;
+        if (imageUrl) {
+            // Extract public_id for single image deletion
+            const parts = imageUrl.split('/');
+            const publicIdWithExtension = parts[parts.length - 1]; // Last part of URL (filename)
+            publicId = publicIdWithExtension.split('.')[0]; // Remove extension
+        }
+
+        if (imageUrl) {
+            // Delete single image from Cloudinary
+            const result = await cloudinary.uploader.destroy(publicId);
+            if (result.result !== "ok") {
+                return res.status(500).json({ error: "Error deleting image from Cloudinary" });
+            }
+
+            // Remove the image from the `images` array in MongoDB
+            await Product.findByIdAndUpdate(productId, { $pull: { images: imageUrl } });
+
+            return res.json({ message: "Image deleted successfully" });
+        } else {
+            // Delete all images from Cloudinary
+            const deletionResults = await Promise.all(
+                product.images.map(async (img) => {
+                    const imgParts = img.split('/');
+                    const imgPublicId = imgParts[imgParts.length - 1].split('.')[0];
+                    return cloudinary.uploader.destroy(imgPublicId);
+                })
+            );
+
+            // Check if any deletions failed
+            if (deletionResults.some((res) => res.result !== "ok")) {
+                return res.status(500).json({ error: "Error deleting some images from Cloudinary" });
+            }
+
+            // Remove all images from database
+            await Product.findByIdAndUpdate(productId, { $unset: { images: 1 } });
+
+            return res.json({ message: "All images deleted successfully" });
+        }
+    } catch (error) {
+        console.error(error);
         res.status(500).json({ error: error.message });
     }
 };
+
