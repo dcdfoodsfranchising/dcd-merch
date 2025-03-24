@@ -6,7 +6,7 @@ const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('../config/cloudinary'); // Import Cloudinary setup
 
-// 🔹 Setup Cloudinary Storage for Multer (Move this BEFORE using multer)
+// 🔹 Setup Cloudinary Storage for Multer
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
@@ -19,47 +19,47 @@ const storage = new CloudinaryStorage({
 // 🔹 Initialize Multer AFTER defining storage
 const upload = multer({ storage });
 
-// Create a new product
-router.post('/', verify, verifyAdmin, productController.createProduct);
+// 📌 Create a new product (Handles images)
+router.post('/', verify, verifyAdmin, upload.array('images', 5), productController.createProduct);
 
-// Get all products
+// 📌 Get all products
 router.get('/all', verify, verifyAdmin, productController.getAllProducts);
 
-// Get all active products
+// 📌 Get all active products
 router.get('/active', productController.activeProducts);
 
-// Get a single product by ID
+// 📌 Get a single product by ID
 router.get('/:productId', productController.singleProduct);
 
-// Update product information
+// 📌 Update product information
 router.patch('/:productId/update', verify, verifyAdmin, productController.updateProductInfo);
 
-// Archive a product
+// 📌 Archive a product
 router.patch('/:productId/archive', verify, verifyAdmin, productController.archiveProduct);
 
-// Activate a product
+// 📌 Activate a product
 router.patch('/:productId/activate', verify, verifyAdmin, productController.activateProduct);
 
-// Search products by name
+// 📌 Search products by name
 router.post('/search-by-name', productController.searchProductsByName);
 
-// Search products by price
+// 📌 Search products by price
 router.post('/search-by-price', productController.searchProductsByPrice);
 
-// Add Stock
+// 📌 Add Stock
 router.post("/:productId/add-stock", verify, verifyAdmin, productController.addStock);
 
 // 📌 Add or Remove Product as Featured
 router.patch('/:productId/feature', verify, verifyAdmin, productController.toggleFeaturedProduct);
 
-// 📌 Upload or Replace Product Image
+// 📌 Upload or Replace Product Images (Fixed Field Name)
 router.post(
-    "/:productId/upload-image", verify, verifyAdmin,
-    upload.array("image", 5), // Multer middleware for multiple file uploads
-    productController.uploadProductImages // Ensure this function is properly imported
+    "/:productId/upload-images", verify, verifyAdmin,
+    upload.array("images", 5), // Ensure "images" matches the frontend input field name
+    productController.uploadProductImages
 );
 
-// 📌 Delete Product Image
+// 📌 Delete a Product Image
 router.delete('/:productId/delete-image', verify, verifyAdmin, productController.deleteProductImage);
 
 module.exports = router;

@@ -6,26 +6,36 @@ const cloudinary = require('../config/cloudinary');
 // Create a new product
 module.exports.createProduct = async (req, res) => {
     try {
+        const { name, description, price, quantity, isFeatured, isActive } = req.body;
+        let imageUrls = [];
+
+        // Check if files are uploaded
+        if (req.files && req.files.length > 0) {
+            imageUrls = await Promise.all(
+                req.files.map(async (file) => {
+                    const result = await cloudinary.uploader.upload(file.path);
+                    return result.secure_url; // Store the Cloudinary URL
+                })
+            );
+        }
+
         const product = new Product({
-            name: req.body.name,
-            description: req.body.description,
-            price: req.body.price,
-            quantity: req.body.quantity || 0,
-            image: req.body.image || "",
-            isFeatured: req.body.isFeatured || false,
-            isActive: req.body.isActive !== undefined ? req.body.isActive : true
+            name,
+            description,
+            price,
+            quantity: quantity || 0,
+            images: imageUrls, // Save multiple images
+            isFeatured: isFeatured || false,
+            isActive: isActive !== undefined ? isActive : true
         });
 
         await product.save();
-        res.status(201).json({
-            message: "Product added successfully",
-            product
-        });
+        res.status(201).json({ message: "Product added successfully", product });
+
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
 };
-
 // Retrieve all products
 module.exports.getAllProducts = async (req, res) => {
     try {
