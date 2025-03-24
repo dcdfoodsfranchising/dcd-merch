@@ -147,6 +147,24 @@ module.exports.searchProductsByPrice = async (req, res) => {
     }
 };
 
+// Add Stock
+module.exports.addStock = async (req, res) => {
+    try {
+        const { quantity } = req.body;
+        const product = await Product.findById(req.params.productId);
+
+        if (!product) return res.status(404).json({ error: "Product not found" });
+
+        product.quantity += quantity; // ✅ Increase stock
+        await product.save();
+
+        res.status(200).json({ message: "Stock updated", product });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
 // Toggle Featured Product
 module.exports.toggleFeaturedProduct = async (req, res) => {
     try {

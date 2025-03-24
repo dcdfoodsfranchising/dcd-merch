@@ -9,7 +9,7 @@ const userRoutes = require("./routes/user");
 const productRoutes = require("./routes/product");
 const orderRoutes = require("./routes/order");
 const cartRoutes = require("./routes/cart");
-const wishlistRoutes = require("./routes/wishlist");
+
 
 // Initialize Express App
 const app = express();

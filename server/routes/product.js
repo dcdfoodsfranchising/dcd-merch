@@ -46,6 +46,9 @@ router.post('/search-by-name', productController.searchProductsByName);
 // Search products by price
 router.post('/search-by-price', productController.searchProductsByPrice);
 
+// Add Stock
+router.post("/:productId/add-stock", verify, verifyAdmin, productController.addStock);
+
 // 📌 Add or Remove Product as Featured
 router.patch('/:productId/feature', verify, verifyAdmin, productController.toggleFeaturedProduct);
 
