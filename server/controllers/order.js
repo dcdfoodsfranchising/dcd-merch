@@ -117,13 +117,21 @@ module.exports.getOrders = async (req, res) => {
 
 module.exports.getAllOrders = async (req, res) => {
     try {
-        // Fetch all orders for the admin
-        const orders = await Order.find().populate({
-            path: 'productsOrdered.productId',
-            select: 'name description price'
-        });
+        console.log("Fetching all orders..."); // Debugging log
 
-        // If no orders found, return an empty array
+        // Fetch orders from the database with proper population
+        const orders = await Order.find()
+            .populate({
+                path: 'productsOrdered.productId',
+                select: 'name description price'
+            })
+            .populate({
+                path: 'userId',
+                select: 'firstName lastName email' // Fetch user details
+            });
+
+        console.log("Orders fetched:", orders); // Log fetched orders
+
         if (!orders || orders.length === 0) {
             return res.status(200).json({ message: 'No orders found', orders: [] });
         }
@@ -131,26 +139,34 @@ module.exports.getAllOrders = async (req, res) => {
         // Format the order details
         const formattedOrders = orders.map(order => ({
             _id: order._id,
-            userId: order.userId,
+            user: {
+                userId: order.userId._id,
+                name: `${order.userId.firstName} ${order.userId.lastName}`,
+                email: order.userId.email
+            },
             productsOrdered: order.productsOrdered.map(item => ({
-                productId: item.productId._id,
-                name: item.productId.name,
-                description: item.productId.description,
-                price: item.productId.price,
+                productId: item.productId?._id || "Unknown", // Avoid crashing if missing
+                name: item.productId?.name || "Unknown Product",
+                description: item.productId?.description || "No Description",
+                price: item.productId?.price || 0,
                 quantity: item.quantity,
                 subtotal: item.subtotal
             })),
             totalPrice: order.totalPrice,
-            status: order.status,  // Add status to response
+            status: order.status,
             orderedOn: order.orderedOn,
+            statusHistory: order.statusHistory // Include status history
         }));
 
-        // Send the formatted orders in the response
+        console.log("Formatted Orders:", formattedOrders); // Debugging log
+
         res.status(200).json({ orders: formattedOrders });
     } catch (error) {
-        res.status(500).json({ message: 'Internal Server Error', error });
+        console.error("Error in getAllOrders:", error); // Log error details
+        res.status(500).json({ message: 'Internal Server Error', error: error.message });
     }
 };
+
 
 // Update the status of an order (for admin)
 module.exports.updateOrderStatus = async (req, res) => {
