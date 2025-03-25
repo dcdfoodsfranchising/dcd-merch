@@ -5,6 +5,7 @@ const auth = require('../middlewares/auth');
 const bcrypt = require('bcryptjs');
 const express = require('express');
 const mongoose = require('mongoose');
+const { emitNewOrder } = require("../index");
 const { errorHandler } = auth;
 
 
@@ -42,9 +43,9 @@ module.exports.createOrder = async (req, res) => {
             product.quantity -= item.quantity;
             await product.save();
 
-            // Add to order list with valid ObjectId
+            // Add to order list
             productsOrdered.push({
-                productId: product._id, // Ensure valid reference
+                productId: product._id,
                 quantity: item.quantity,
                 subtotal: item.subtotal
             });
@@ -67,6 +68,9 @@ module.exports.createOrder = async (req, res) => {
         cart.totalPrice = 0;
         await cart.save();
 
+        // ✅ Emit real-time order update
+        emitNewOrder(order);
+
         res.status(201).json({
             message: "Order placed successfully",
             order
@@ -76,6 +80,7 @@ module.exports.createOrder = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 };
+
 
 
 

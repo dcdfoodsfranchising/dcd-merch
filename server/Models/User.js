@@ -1,8 +1,7 @@
 const mongoose = require('mongoose');
 
-// User Schema
-const userSchema = new mongoose.Schema({
-    
+// Check if the model is already defined
+const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({
     firstName: {
         type: String,
         required: [true, 'First Name is required']
@@ -31,6 +30,6 @@ const userSchema = new mongoose.Schema({
          type: mongoose.Schema.Types.ObjectId, 
          ref: "Product" 
     }]
-});
+}));
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = User;
