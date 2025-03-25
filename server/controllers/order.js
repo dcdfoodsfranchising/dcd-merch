@@ -13,36 +13,38 @@ module.exports.createOrder = async (req, res) => {
         const userId = req.user.id;
 
         // Find the cart for the user and populate the cart items
-        const cart = await Cart.findOne({ userId }).populate('cartItems.productId');
+        const cart = await Cart.findOne({ userId }).populate("cartItems.productId");
 
         if (!cart || !cart.cartItems || cart.cartItems.length === 0) {
-            return res.status(404).json({ message: 'No items in the cart to checkout' });
+            return res.status(404).json({ message: "No items in the cart to checkout" });
         }
 
         let totalPrice = 0;
         const productsOrdered = [];
 
-        // Check stock availability and deduct quantity
         for (let item of cart.cartItems) {
-            const product = await Product.findById(item.productId);
+            if (!item.productId || !item.productId._id) {
+                return res.status(400).json({ error: `Invalid product reference in cart.` });
+            }
 
+            const product = await Product.findById(item.productId._id);
             if (!product) {
-                return res.status(404).json({ error: `Product not found: ${item.productId}` });
+                return res.status(404).json({ error: `Product not found: ${item.productId._id}` });
             }
 
             if (product.quantity < item.quantity) {
-                return res.status(400).json({ 
-                    error: `Not enough stock for ${product.name}. Available: ${product.quantity}` 
+                return res.status(400).json({
+                    error: `Not enough stock for ${product.name}. Available: ${product.quantity}`
                 });
             }
 
             // Deduct stock
             product.quantity -= item.quantity;
-            await product.save(); // ✅ Update product stock in DB
+            await product.save();
 
-            // Add to order list
+            // Add to order list with valid ObjectId
             productsOrdered.push({
-                productId: product._id,
+                productId: product._id, // Ensure valid reference
                 quantity: item.quantity,
                 subtotal: item.subtotal
             });
@@ -50,15 +52,14 @@ module.exports.createOrder = async (req, res) => {
             totalPrice += item.subtotal;
         }
 
-        // Create a new order with status 'Pending'
+        // Create a new order
         const order = new Order({
             userId,
             productsOrdered,
             totalPrice,
-            status: 'Pending'
+            status: "Pending"
         });
 
-        // Save the order
         await order.save();
 
         // Clear the user's cart
@@ -67,12 +68,12 @@ module.exports.createOrder = async (req, res) => {
         await cart.save();
 
         res.status(201).json({
-            message: 'Order placed successfully',
+            message: "Order placed successfully",
             order
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Internal Server Error', error: error.message });
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 };
 
@@ -117,55 +118,56 @@ module.exports.getOrders = async (req, res) => {
 
 module.exports.getAllOrders = async (req, res) => {
     try {
-        console.log("Fetching all orders..."); // Debugging log
+        console.log("Fetching all orders...");
 
-        // Fetch orders from the database with proper population
         const orders = await Order.find()
             .populate({
-                path: 'productsOrdered.productId',
-                select: 'name description price'
+                path: "productsOrdered.productId",
+                model: "Product", // ✅ Explicitly specify the model
+                select: "name description price"
             })
             .populate({
-                path: 'userId',
-                select: 'firstName lastName email' // Fetch user details
+                path: "userId",
+                select: "firstName lastName email"
             });
 
-        console.log("Orders fetched:", orders); // Log fetched orders
+        console.log("Orders fetched from DB:", orders); // Debugging log
 
         if (!orders || orders.length === 0) {
-            return res.status(200).json({ message: 'No orders found', orders: [] });
+            return res.status(200).json({ message: "No orders found", orders: [] });
         }
 
-        // Format the order details
         const formattedOrders = orders.map(order => ({
             _id: order._id,
             user: {
-                userId: order.userId._id,
-                name: `${order.userId.firstName} ${order.userId.lastName}`,
-                email: order.userId.email
+                userId: order.userId?._id,
+                name: `${order.userId?.firstName || "Unknown"} ${order.userId?.lastName || ""}`,
+                email: order.userId?.email || "No Email"
             },
             productsOrdered: order.productsOrdered.map(item => ({
-                productId: item.productId?._id || "Unknown", // Avoid crashing if missing
-                name: item.productId?.name || "Unknown Product",
-                description: item.productId?.description || "No Description",
-                price: item.productId?.price || 0,
+                productId: item?.productId?._id || "Unknown",
+                name: item?.productId?.name || "Unknown Product",
+                description: item?.productId?.description || "No Description",
+                price: item?.productId?.price || 0,
                 quantity: item.quantity,
                 subtotal: item.subtotal
             })),
             totalPrice: order.totalPrice,
             status: order.status,
             orderedOn: order.orderedOn,
-            statusHistory: order.statusHistory // Include status history
+            statusHistory: order.statusHistory
         }));
 
-        console.log("Formatted Orders:", formattedOrders); // Debugging log
-
+        console.log("Formatted Orders:", formattedOrders);
         res.status(200).json({ orders: formattedOrders });
     } catch (error) {
-        console.error("Error in getAllOrders:", error); // Log error details
-        res.status(500).json({ message: 'Internal Server Error', error: error.message });
+        console.error("Error in getAllOrders:", error);
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 };
+
+
+
 
 
 // Update the status of an order (for admin)
