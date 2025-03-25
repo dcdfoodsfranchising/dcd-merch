@@ -1,6 +1,6 @@
 const socketIo = require("socket.io");
 
-let io; // ✅ Declare io globally
+let io;
 
 const initializeSocket = (server) => {
     io = socketIo(server, {
@@ -17,14 +17,21 @@ const initializeSocket = (server) => {
     console.log("✅ WebSocket Server Initialized.");
 };
 
-// ✅ Fix: Define and Export `emitNewOrder` Separately
+// ✅ Emit new order event
 const emitNewOrder = (order) => {
     if (io) {
-        console.log("📢 Emitting New Order:", order);
         io.emit("newOrder", order);
     } else {
         console.error("❌ WebSocket IO is not initialized");
     }
 };
 
-module.exports = { initializeSocket, emitNewOrder };
+// ✅ Emit product update event
+const emitProductUpdate = (product) => {
+    if (io) {
+        console.log("📢 Product Updated:", product);
+        io.emit("productUpdated", product);
+    }
+};
+
+module.exports = { initializeSocket, emitNewOrder, emitProductUpdate };

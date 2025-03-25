@@ -13,7 +13,6 @@ module.exports.createOrder = async (req, res) => {
     try {
         const userId = req.user.id;
 
-        // Find the cart for the user and populate the cart items
         const cart = await Cart.findOne({ userId }).populate("cartItems.productId");
 
         if (!cart || !cart.cartItems || cart.cartItems.length === 0) {
@@ -39,11 +38,13 @@ module.exports.createOrder = async (req, res) => {
                 });
             }
 
-            // Deduct stock
+            // ✅ Deduct stock & save
             product.quantity -= item.quantity;
             await product.save();
 
-            // Add to order list
+            // ✅ Emit product update event
+            emitProductUpdate(product);
+
             productsOrdered.push({
                 productId: product._id,
                 quantity: item.quantity,
@@ -53,7 +54,6 @@ module.exports.createOrder = async (req, res) => {
             totalPrice += item.subtotal;
         }
 
-        // Create a new order
         const order = new Order({
             userId,
             productsOrdered,
@@ -63,35 +63,25 @@ module.exports.createOrder = async (req, res) => {
 
         await order.save();
 
-        // Clear the user's cart
         cart.cartItems = [];
         cart.totalPrice = 0;
         await cart.save();
 
-        // ✅ Fetch the full order with user details before emitting
         const fullOrder = await Order.findById(order._id)
-            .populate({
-                path: "userId",
-                select: "firstName lastName email", // ✅ Populate customer details
-            })
-            .populate({
-                path: "productsOrdered.productId",
-                select: "name description price", // ✅ Populate product details
-            });
+            .populate({ path: "userId", select: "firstName lastName email" })
+            .populate({ path: "productsOrdered.productId", select: "name description price" });
 
-        // ✅ Emit the fully populated order for real-time updates
-        emitNewOrder(fullOrder);
+        emitNewOrder(fullOrder); // ✅ Emit full order details
 
         res.status(201).json({
             message: "Order placed successfully",
-            order: fullOrder, // ✅ Return full order details to the frontend
+            order: fullOrder,
         });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 };
-
 
 
 module.exports.getOrders = async (req, res) => {
