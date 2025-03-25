@@ -26,11 +26,13 @@ const emitNewOrder = (order) => {
     }
 };
 
-// ✅ Emit product update event
+// ✅ Fix: Define `emitProductUpdate`
 const emitProductUpdate = (product) => {
     if (io) {
         console.log("📢 Product Updated:", product);
         io.emit("productUpdated", product);
+    } else {
+        console.error("❌ WebSocket IO is not initialized");
     }
 };
 
