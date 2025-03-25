@@ -27,20 +27,14 @@ export default function Login({ onClose }) {
 
       if (response.data.access) {
         localStorage.setItem("token", response.data.access);
-        retrieveUserDetails(response.data.access);
-
-        toast.success("Login successful!");
-        setTimeout(() => {
-          onClose();
-          navigate("/products");
-        }, 1000);
+        await retrieveUserDetails(response.data.access);
       } else {
         toast.error("Login failed. Please try again.");
+        setLoading(false);
       }
     } catch (error) {
       console.error("❌ Login Error:", error);
       toast.error("Invalid credentials. Try again.");
-    } finally {
       setLoading(false);
     }
   };
@@ -59,8 +53,23 @@ export default function Login({ onClose }) {
         "user",
         JSON.stringify({ id: userData._id, isAdmin: userData.isAdmin })
       );
+
+      toast.success("Login successful!");
+
+      // **Redirect based on role**
+      setTimeout(() => {
+        onClose();
+        if (userData.isAdmin) {
+          navigate("/dashboard"); // ✅ Redirect admin users to Dashboard
+        } else {
+          navigate("/"); // ✅ Redirect non-admin users to Home
+        }
+      }, 1000);
     } catch (error) {
       console.error("❌ Error retrieving user details:", error);
+      toast.error("Failed to retrieve user details.");
+    } finally {
+      setLoading(false);
     }
   };
 

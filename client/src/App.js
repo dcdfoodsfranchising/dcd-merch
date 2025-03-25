@@ -9,7 +9,8 @@ import Login from "./components/Auth/Login";
 import Register from "./components/Auth/Register";
 import AdminSidebar from "./components/AppNavbar/AdminSidebar";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
-import AdminDashboard from "./pages/AdminDashboard";
+import AdminProducts from "./pages/AdminProducts";
+import AdminOrders from "./pages/AdminOrders"
 
 function UserRedirector() {
   const navigate = useNavigate();
@@ -18,13 +19,14 @@ function UserRedirector() {
   useEffect(() => {
     if (!user?.id || !user?.isAdmin) {
       navigate("/"); // ✅ Redirect if user is not logged in OR is not an admin
-    } else if (user?.isAdmin) {
-      navigate("/dashboard"); // ✅ Redirect admin users to Dashboard
+    } else if (user?.isAdmin && window.location.pathname === "/") {
+      navigate("/dashboard"); // ✅ Redirect admin users ONLY IF they are on "/"
     }
   }, [user, navigate]);
 
   return null;
 }
+
 
 
 function App() {
@@ -83,8 +85,9 @@ function App() {
               <Route path="/register" element={<Register />} />
 
               {/* ✅ Protect admin-only routes */}
-              <Route path="/dashboard" element={<ProtectedRoute component={AdminDashboard} />} />
-              {/* <Route path="/orders" element={<ProtectedRoute component={AdminOrders} />} /> ✅ Make sure this is accessible */}
+              <Route path="/admin/products" element={<ProtectedRoute component={AdminProducts} />} />
+              <Route path="/admin/orders" element={<ProtectedRoute component={AdminOrders} />} />
+              
             </Routes>
 
             </div>
