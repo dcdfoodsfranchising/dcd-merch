@@ -10,9 +10,9 @@ const cloudinary = require('../config/cloudinary'); // Import Cloudinary setup
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'uploads', // Change folder name as needed
+    folder: 'uploads', // Folder name in Cloudinary
     allowed_formats: ['jpg', 'png', 'jpeg'],
-    public_id: (req, file) => file.fieldname + '-' + Date.now(),
+    public_id: (req, file) => file.originalname.split('.')[0] + '-' + Date.now(),
   },
 });
 
@@ -39,6 +39,9 @@ router.patch('/:productId/archive', verify, verifyAdmin, productController.archi
 
 // 📌 Activate a product
 router.patch('/:productId/activate', verify, verifyAdmin, productController.activateProduct);
+
+// DELETE route to remove a product (only for admins)
+router.delete("/:productId", verify, verifyAdmin, productController.deleteProduct);
 
 // 📌 Search products by name
 router.post('/search-by-name', productController.searchProductsByName);

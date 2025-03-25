@@ -56,6 +56,28 @@ module.exports.activeProducts = async (req, res) => {
     }
 };
 
+// DELETE a product by ID
+module.exports.deleteProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    // Check if product exists
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Delete the product
+    await Product.findByIdAndDelete(productId);
+
+    res.json({ message: "Product deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 // Get Single Product
 module.exports.singleProduct = async (req, res) => {
     try {
