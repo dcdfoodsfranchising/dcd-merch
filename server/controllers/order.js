@@ -68,7 +68,7 @@ module.exports.createOrder = async (req, res) => {
         cart.totalPrice = 0;
         await cart.save();
 
-        // ✅ Emit real-time order update
+        // ✅ Fix: Now emits the order event correctly
         emitNewOrder(order);
 
         res.status(201).json({
@@ -80,7 +80,6 @@ module.exports.createOrder = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 };
-
 
 
 

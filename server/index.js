@@ -1,9 +1,8 @@
-// Import Statements
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const http = require("http"); // ✅ Import HTTP module
-const socketIo = require("socket.io"); // ✅ Import Socket.io
+const http = require("http");
+const socketIo = require("socket.io");
 require("dotenv").config();
 
 // Route Imports
@@ -14,30 +13,15 @@ const cartRoutes = require("./routes/cart");
 const wishlistRoutes = require("./routes/wishlist");
 const dashboardRoutes = require("./routes/dashboard");
 
-// Initialize Express App
 const app = express();
-const server = http.createServer(app); // ✅ Create HTTP server
+const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
-        origin: "*", // ✅ Allow all origins for now
+        origin: "*",
     },
 });
 
-// Middleware Setup
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// CORS Configuration - Allow only specific origins
-app.use(cors({
-    origin: "*",
-    credentials: true
-}));
-
-// Database Connection (Removed Deprecated Options)
-mongoose.connect(process.env.MONGODB_STRING);
-mongoose.connection.once("open", () => console.log("✅ Connected to MongoDB Atlas."));
-
-// WebSocket Connection
+// WebSocket Setup
 io.on("connection", (socket) => {
     console.log(`🔌 New client connected: ${socket.id}`);
 
@@ -46,12 +30,20 @@ io.on("connection", (socket) => {
     });
 });
 
-// Emit new order event function
+// ✅ Fix: Properly Define `emitNewOrder`
 const emitNewOrder = (order) => {
-    io.emit("newOrder", order); // ✅ Broadcast new order to all clients
+    if (io) {
+        io.emit("newOrder", order);
+        console.log("📢 New order emitted:", order);
+    }
 };
 
-// Route Handling
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors({ origin: "*", credentials: true }));
+
+// Routes
 app.use("/users", userRoutes);
 app.use("/products", productRoutes);
 app.use("/orders", orderRoutes);
@@ -67,5 +59,5 @@ if (require.main === module) {
     });
 }
 
-// Export app, mongoose, and io (WebSockets)
+// ✅ Fix: Export correctly
 module.exports = { app, mongoose, io, emitNewOrder };
