@@ -68,18 +68,30 @@ module.exports.createOrder = async (req, res) => {
         cart.totalPrice = 0;
         await cart.save();
 
-        // ✅ Fix: Emit the new order event for real-time update
-        emitNewOrder(order);
+        // ✅ Fetch the full order with user details before emitting
+        const fullOrder = await Order.findById(order._id)
+            .populate({
+                path: "userId",
+                select: "firstName lastName email", // ✅ Populate customer details
+            })
+            .populate({
+                path: "productsOrdered.productId",
+                select: "name description price", // ✅ Populate product details
+            });
+
+        // ✅ Emit the fully populated order for real-time updates
+        emitNewOrder(fullOrder);
 
         res.status(201).json({
             message: "Order placed successfully",
-            order
+            order: fullOrder, // ✅ Return full order details to the frontend
         });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 };
+
 
 
 module.exports.getOrders = async (req, res) => {
