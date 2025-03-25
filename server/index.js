@@ -19,25 +19,9 @@ const io = socketIo(server, {
     cors: { origin: "*" },
 });
 
-// ✅ MongoDB Connection
-const connectDB = async () => {
-    try {
-        console.log("🔌 Connecting to MongoDB...");
-        await mongoose.connect(process.env.MONGODB_STRING, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 10000, // 10 seconds timeout
-        });
-
-        console.log("✅ Connected to MongoDB Atlas.");
-    } catch (error) {
-        console.error("❌ MongoDB Connection Error:", error.message);
-        process.exit(1); // Stop the app if MongoDB fails
-    }
-};
-
-// Call MongoDB Connection
-connectDB();
+// Database Connection (Removed Deprecated Options)
+mongoose.connect(process.env.MONGODB_STRING);
+mongoose.connection.once("open", () => console.log("✅ Connected to MongoDB Atlas."));
 
 // WebSocket Setup
 io.on("connection", (socket) => {
