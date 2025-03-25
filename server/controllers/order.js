@@ -5,7 +5,7 @@ const auth = require('../middlewares/auth');
 const bcrypt = require('bcryptjs');
 const express = require('express');
 const mongoose = require('mongoose');
-const { emitNewOrder } = require("../socket");
+const {  emitNewOrder, emitProductUpdate } = require("../socket");
 const { errorHandler } = auth;
 
 
