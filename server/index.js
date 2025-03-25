@@ -14,12 +14,14 @@ const wishlistRoutes = require("./routes/wishlist");
 const dashboardRoutes = require("./routes/dashboard");
 
 const app = express();
-const server = http.createServer(app);
+const server = http.createServer(app); // ✅ Use HTTP server
 const io = socketIo(server, {
     cors: {
         origin: "*",
     },
 });
+
+console.log("🔌 WebSocket Server Initialized:", io !== undefined); // ✅ Debugging log
 
 // WebSocket Setup
 io.on("connection", (socket) => {
@@ -30,11 +32,13 @@ io.on("connection", (socket) => {
     });
 });
 
-// ✅ Fix: Properly Define `emitNewOrder`
+// ✅ Fix: Ensure `emitNewOrder` is properly defined
 const emitNewOrder = (order) => {
     if (io) {
+        console.log("📢 Emitting New Order:", order);
         io.emit("newOrder", order);
-        console.log("📢 New order emitted:", order);
+    } else {
+        console.error("❌ WebSocket IO is not initialized");
     }
 };
 
@@ -59,5 +63,5 @@ if (require.main === module) {
     });
 }
 
-// ✅ Fix: Export correctly
+// ✅ Fix: Ensure correct export
 module.exports = { app, mongoose, io, emitNewOrder };
