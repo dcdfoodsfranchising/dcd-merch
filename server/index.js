@@ -14,25 +14,40 @@ const wishlistRoutes = require("./routes/wishlist");
 const dashboardRoutes = require("./routes/dashboard");
 
 const app = express();
-const server = http.createServer(app); // ✅ Use HTTP server
+const server = http.createServer(app);
 const io = socketIo(server, {
-    cors: {
-        origin: "*",
-    },
+    cors: { origin: "*" },
 });
 
-console.log("🔌 WebSocket Server Initialized:", io !== undefined); // ✅ Debugging log
+// ✅ MongoDB Connection
+const connectDB = async () => {
+    try {
+        console.log("🔌 Connecting to MongoDB...");
+        await mongoose.connect(process.env.MONGODB_STRING, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 10000, // 10 seconds timeout
+        });
+
+        console.log("✅ Connected to MongoDB Atlas.");
+    } catch (error) {
+        console.error("❌ MongoDB Connection Error:", error.message);
+        process.exit(1); // Stop the app if MongoDB fails
+    }
+};
+
+// Call MongoDB Connection
+connectDB();
 
 // WebSocket Setup
 io.on("connection", (socket) => {
     console.log(`🔌 New client connected: ${socket.id}`);
-
     socket.on("disconnect", () => {
         console.log(`❌ Client disconnected: ${socket.id}`);
     });
 });
 
-// ✅ Fix: Ensure `emitNewOrder` is properly defined
+// ✅ Function to Emit New Orders
 const emitNewOrder = (order) => {
     if (io) {
         console.log("📢 Emitting New Order:", order);
@@ -63,5 +78,5 @@ if (require.main === module) {
     });
 }
 
-// ✅ Fix: Ensure correct export
+// ✅ Ensure Correct Export
 module.exports = { app, mongoose, io, emitNewOrder };
