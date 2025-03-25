@@ -5,7 +5,7 @@ const auth = require('../middlewares/auth');
 const bcrypt = require('bcryptjs');
 const express = require('express');
 const mongoose = require('mongoose');
-const { emitNewOrder } = require("../index");
+const { emitNewOrder } = require("../socket");
 const { errorHandler } = auth;
 
 
@@ -68,7 +68,7 @@ module.exports.createOrder = async (req, res) => {
         cart.totalPrice = 0;
         await cart.save();
 
-        // ✅ Fix: Now emits the order event correctly
+        // ✅ Fix: Emit the new order event for real-time update
         emitNewOrder(order);
 
         res.status(201).json({
@@ -80,7 +80,6 @@ module.exports.createOrder = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 };
-
 
 
 module.exports.getOrders = async (req, res) => {

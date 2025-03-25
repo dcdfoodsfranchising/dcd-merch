@@ -2,8 +2,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const http = require("http");
-const socketIo = require("socket.io");
 require("dotenv").config();
+const { initializeSocket } = require("./socket"); // ✅ Import WebSocket initializer
 
 // Route Imports
 const userRoutes = require("./routes/user");
@@ -15,31 +15,13 @@ const dashboardRoutes = require("./routes/dashboard");
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
-    cors: { origin: "*" },
-});
+
+// ✅ Initialize WebSockets AFTER server creation
+initializeSocket(server);
 
 // Database Connection (Removed Deprecated Options)
 mongoose.connect(process.env.MONGODB_STRING);
 mongoose.connection.once("open", () => console.log("✅ Connected to MongoDB Atlas."));
-
-// WebSocket Setup
-io.on("connection", (socket) => {
-    console.log(`🔌 New client connected: ${socket.id}`);
-    socket.on("disconnect", () => {
-        console.log(`❌ Client disconnected: ${socket.id}`);
-    });
-});
-
-// ✅ Function to Emit New Orders
-const emitNewOrder = (order) => {
-    if (io) {
-        console.log("📢 Emitting New Order:", order);
-        io.emit("newOrder", order);
-    } else {
-        console.error("❌ WebSocket IO is not initialized");
-    }
-};
 
 // Middleware
 app.use(express.json());
@@ -60,7 +42,7 @@ if (require.main === module) {
     server.listen(PORT, () => {
         console.log(`🚀 API is now online on port ${PORT}`);
     });
-}
+};
 
-// ✅ Ensure Correct Export
-module.exports = { app, mongoose, io, emitNewOrder };
+// ✅ Fix: Remove circular dependency issue
+module.exports = { app, mongoose };
