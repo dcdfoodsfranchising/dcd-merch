@@ -1,34 +1,34 @@
-const mongoose = require("mongoose");
-const Order = require("../Models/Order");
-const User = require("../Models/User");
-
 module.exports.getDashboardSummary = async (req, res) => {
     try {
-        const { filterType } = req.query; // Get filter type from query parameter (daily, weekly, monthly, etc.)
+        const { filterType, date, month, year } = req.query;
         let startDate, endDate;
 
-        // Get start and end date based on filterType
         const now = new Date();
+
         if (filterType === "daily") {
-            startDate = new Date(now.setHours(0, 0, 0, 0)); // Start of today
-            endDate = new Date(now.setHours(23, 59, 59, 999)); // End of today
-        } else if (filterType === "weekly") {
-            const firstDayOfWeek = new Date(now.setDate(now.getDate() - now.getDay())); // Start of week (Sunday)
-            startDate = new Date(firstDayOfWeek.setHours(0, 0, 0, 0));
-            endDate = new Date(now.setDate(startDate.getDate() + 6)); // End of week
-        } else if (filterType === "monthly") {
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1); // Start of month
-            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0); // End of month
-        } else if (filterType === "quarterly") {
-            const quarter = Math.floor(now.getMonth() / 3); // Get current quarter
-            startDate = new Date(now.getFullYear(), quarter * 3, 1); // Start of quarter
-            endDate = new Date(now.getFullYear(), (quarter + 1) * 3, 0); // End of quarter
-        } else if (filterType === "yearly") {
-            startDate = new Date(now.getFullYear(), 0, 1); // Start of year
-            endDate = new Date(now.getFullYear(), 11, 31); // End of year
-        } else {
-            return res.status(400).json({ message: "Invalid filter type. Use daily, weekly, monthly, quarterly, or yearly." });
+            if (!date) return res.status(400).json({ message: "Date is required for daily filtering." });
+            startDate = new Date(date);
+            startDate.setHours(0, 0, 0, 0);
+            endDate = new Date(date);
+            endDate.setHours(23, 59, 59, 999);
+        } 
+        else if (filterType === "monthly") {
+            if (!year || !month) return res.status(400).json({ message: "Year and month are required for monthly filtering." });
+
+            const adjustedMonth = parseInt(month) - 1; // Convert 1-based month to 0-based for JavaScript
+            startDate = new Date(year, adjustedMonth, 1, 0, 0, 0, 0); 
+            endDate = new Date(year, adjustedMonth + 1, 0, 23, 59, 59, 999); // Last day of the month
+        } 
+        else if (filterType === "yearly") {
+            if (!year) return res.status(400).json({ message: "Year is required for yearly filtering." });
+            startDate = new Date(year, 0, 1, 0, 0, 0, 0); 
+            endDate = new Date(year, 11, 31, 23, 59, 59, 999); // Last day of the year
+        } 
+        else {
+            return res.status(400).json({ message: "Invalid filter type. Use daily, monthly, or yearly." });
         }
+
+        console.log(`Filtering orders from ${startDate} to ${endDate}`); // ✅ Debugging log
 
         // Convert dates to ISO format for MongoDB queries
         startDate = new Date(startDate);
@@ -42,26 +42,26 @@ module.exports.getDashboardSummary = async (req, res) => {
             orderSummary,
             bestSellers
         ] = await Promise.all([
-            // Total Sales for the selected period
+            // ✅ Total Sales
             Order.aggregate([
                 { $match: { status: "Completed", orderedOn: { $gte: startDate, $lte: endDate } } },
                 { $group: { _id: null, total: { $sum: "$totalPrice" } } }
             ]).catch(err => console.error("Error in Total Sales:", err) || []),
 
-            // Total Orders for the selected period
+            // ✅ Total Orders
             Order.countDocuments({ orderedOn: { $gte: startDate, $lte: endDate } }).catch(err => console.error("Error in Total Orders:", err) || 0),
 
-            // Total Customers who placed orders in the selected period
+            // ✅ Total Customers
             User.countDocuments({ _id: { $in: await Order.distinct("userId", { orderedOn: { $gte: startDate, $lte: endDate } }) } })
                 .catch(err => console.error("Error in Total Customers:", err) || 0),
 
-            // Order Summary (Processing, Completed, Canceled) for the selected period
+            // ✅ Order Summary (Processing, Completed, Canceled)
             Order.aggregate([
                 { $match: { orderedOn: { $gte: startDate, $lte: endDate } } },
                 { $group: { _id: "$status", count: { $sum: 1 } } }
             ]).catch(err => console.error("Error in Order Summary:", err) || []),
 
-            // Best Sellers based on orders in the selected period
+            // ✅ Best Sellers
             Order.aggregate([
                 { $match: { orderedOn: { $gte: startDate, $lte: endDate } } },
                 { $unwind: "$productsOrdered" },
@@ -92,7 +92,7 @@ module.exports.getDashboardSummary = async (req, res) => {
             ]).catch(err => console.error("Error in Best Sellers:", err) || [])
         ]);
 
-        // Prepare response, ensuring undefined values are set to defaults
+        // ✅ Send Response
         res.status(200).json({
             filterType,
             dateRange: { startDate, endDate },
