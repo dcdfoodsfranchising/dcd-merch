@@ -1,3 +1,4 @@
+import { useState } from "react";
 import useNavbarLogic from "../../hooks/useNavbarLogic";
 import { useNavigate } from "react-router-dom";
 import NavIcons from "./NavIcons";
@@ -5,6 +6,7 @@ import MobileMenu from "./MobileMenu";
 import ProfileDropdown from "./ProfileDropdown";
 import ProfileModal from "../Auth/ProfileModal";
 import LogoutModal from "../Auth/LogoutModal";
+import CartModal from "../UserCart/CartModal"; // Import CartModal
 
 export default function AppNavbar() {
   const navigate = useNavigate();
@@ -23,6 +25,8 @@ export default function AppNavbar() {
     logout,
   } = useNavbarLogic();
 
+  const [cartModalOpen, setCartModalOpen] = useState(false);
+
   return (
     <>
       <nav className="bg-white shadow-sm fixed w-full top-0 left-0 z-50">
@@ -40,7 +44,10 @@ export default function AppNavbar() {
           </button>
 
           {/* Desktop Navigation Icons */}
-          <NavIcons onProfileClick={user?.id ? toggleProfileDropdown : openProfileModal} />
+          <NavIcons 
+            onProfileClick={user?.id ? toggleProfileDropdown : openProfileModal} 
+            onCartClick={() => setCartModalOpen(true)} // Open Cart Modal on Cart Click
+          />
         </div>
       </nav>
 
@@ -55,6 +62,7 @@ export default function AppNavbar() {
       {/* Modals */}
       {profileModalOpen && <ProfileModal isOpen={profileModalOpen} onClose={closeProfileModal} />}
       {logoutModalOpen && <LogoutModal isOpen={logoutModalOpen} onClose={closeLogoutModal} onConfirm={logout} />}
+      <CartModal isOpen={cartModalOpen} onClose={() => setCartModalOpen(false)} /> {/* Cart Modal */}
     </>
   );
 }

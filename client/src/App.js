@@ -11,10 +11,13 @@ import AdminSidebar from "./components/AppNavbar/AdminSidebar";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import AdminProducts from "./pages/AdminProducts";
 import AdminOrders from "./pages/AdminOrders"
+import AdminDashboard from "./pages/AdminDashboard"
 
 function UserRedirector() {
   const navigate = useNavigate();
   const { user } = React.useContext(UserContext);
+
+
 
   useEffect(() => {
     if (!user?.id || !user?.isAdmin) {
@@ -29,6 +32,7 @@ function UserRedirector() {
 
 
 
+
 function App() {
   // Global user state
   const [user, setUser] = useState({
@@ -36,7 +40,30 @@ function App() {
     isAdmin: null
   });
 
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+    // Cart state
+    const [cart, setCart] = useState([]);
+
+    useEffect(() => {
+      async function fetchCart() {
+        if (user?.id) {
+          try {
+            const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/cart/${user.id}`, {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            });
+            const data = await response.json();
+            setCart(data.cart || []); // Set the fetched cart to the state
+          } catch (error) {
+            console.error("Error fetching cart:", error);
+          }
+        }
+      }
+      fetchCart();
+    }, [user]);
+    
+
+   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
 
   const toggleSidebar = () => {
     setIsSidebarExpanded(!isSidebarExpanded);
@@ -70,7 +97,7 @@ function App() {
   };
 
   return (
-    <UserContext.Provider value={{ user, setUser, unsetUser }}>
+    <UserContext.Provider value={{ user, setUser, unsetUser, cart, setCart }}>
       <Router>
         <UserRedirector /> {/* ✅ Handles navigation logic */}
         <div className="flex">
@@ -87,6 +114,7 @@ function App() {
               {/* ✅ Protect admin-only routes */}
               <Route path="/admin/products" element={<ProtectedRoute component={AdminProducts} />} />
               <Route path="/admin/orders" element={<ProtectedRoute component={AdminOrders} />} />
+              <Route path="/dashboard" element={<ProtectedRoute component={AdminDashboard} />} />
               
             </Routes>
 

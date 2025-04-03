@@ -5,7 +5,7 @@ import EditProduct from "../components/Product/EditProduct";
 import CreateProduct from "../components/Product/CreateProduct";
 import { activateProduct, archiveProduct, getAllProducts } from "../services/productService";
 
-const socket = io(process.env.REACT_APP_API_BASE_URL); // ✅ Connect to WebSocket server
+const socket = io(process.env.REACT_APP_API_BASE_URL);
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
@@ -26,7 +26,6 @@ export default function AdminProducts() {
     }
     fetchProducts();
 
-    // ✅ Listen for real-time product updates
     socket.on("productUpdated", (updatedProduct) => {
       console.log("📢 Product Updated in Real-Time:", updatedProduct);
       setProducts((prevProducts) =>
@@ -37,7 +36,7 @@ export default function AdminProducts() {
     });
 
     return () => {
-      socket.off("productUpdated"); // Cleanup on unmount
+      socket.off("productUpdated");
     };
   }, []);
 
@@ -95,14 +94,12 @@ export default function AdminProducts() {
         <div className="bg-red-500 text-white p-2 rounded mb-4 text-center">{errorMessage}</div>
       )}
 
-      {/* Floating Table Container */}
-      <div className="relative overflow-x-auto p-6">
+      <div className="overflow-x-auto p-6 z-[10]">
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
           <table className="table-auto w-full">
             <thead>
               <tr className="bg-gray-200 text-center">
-                <th className="p-4 text-left">Image</th>
-                <th className="p-4 text-left">Name</th>
+                <th className="p-4 text-left">Product Name</th>
                 <th className="p-4 text-left">Description</th>
                 <th className="p-4 text-left">Price</th>
                 <th className="p-4 text-left">Quantity</th>
@@ -114,14 +111,14 @@ export default function AdminProducts() {
               {products.length > 0 ? (
                 products.map((product, index) => (
                   <tr key={product._id} className={`text-left ${index % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
-                    <td className="p-4">
+                    <td className="p-4 flex items-center space-x-4">
                       <img
                         src={product.images?.length > 0 ? product.images[0] : "https://via.placeholder.com/64"}
                         alt={product.name}
                         className="w-16 h-16 object-cover rounded"
                       />
+                      <span>{product.name}</span>
                     </td>
-                    <td className="p-4">{product.name}</td>
                     <td className="p-4">{product.description}</td>
                     <td className="p-4">₱{product.price.toFixed(2)}</td>
                     <td className="p-4">{product.quantity}</td>
@@ -158,7 +155,7 @@ export default function AdminProducts() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="p-6 text-center text-gray-500">
+                  <td colSpan="6" className="p-6 text-center text-gray-500">
                     No products found.
                   </td>
                 </tr>
@@ -168,10 +165,7 @@ export default function AdminProducts() {
         </div>
       </div>
 
-      {/* Add Product Modal */}
       {isAddModalOpen && <CreateProduct onProductAdded={handleProductAdded} onClose={handleCloseAddModal} />}
-
-      {/* Edit Product Modal */}
       {isEditModalOpen && selectedProductId && (
         <EditProduct productId={selectedProductId} isOpen={isEditModalOpen} onProductUpdated={handleProductUpdated} onClose={handleCloseEditModal} />
       )}

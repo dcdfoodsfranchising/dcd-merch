@@ -3,6 +3,7 @@ import io from "socket.io-client";
 import { fetchAllOrders } from "../services/orderService";
 import OrderTable from "../components/Order/OrderTable";
 import moment from "moment"; // ✅ For date filtering
+import { updateOrderStatus } from "../services/orderService";
 
 const socket = io(process.env.REACT_APP_API_BASE_URL); // ✅ Connect to WebSocket server
 
@@ -83,6 +84,26 @@ export default function AdminOrders() {
 
   const filteredOrders = filterOrdersByDate(activeTab === "All" ? orders : orders.filter(order => order.status === activeTab));
 
+  const handleUpdateStatus = async (orderId, newStatus) => {
+    try {
+      const updatedOrder = await updateOrderStatus(orderId, newStatus);
+      console.log('Updated Order:', updatedOrder); // Check if the status is updated here
+    
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order._id === orderId ? { ...order, status: updatedOrder.status } : order
+        )
+      );
+      console.log(`✅ Order ${orderId} updated to ${newStatus}`);
+    } catch (error) {
+      console.error("❌ Failed to update order:", error);
+    }
+  };
+  
+  
+
+  
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4">Admin Orders</h1>
@@ -115,7 +136,7 @@ export default function AdminOrders() {
 
       {/* Tabs for filtering orders */}
       <div className="flex space-x-4 mb-6 border-b">
-        {["All", "Pending", "Processing", "Shipped", "Delivered", "Cancelled"].map((status) => (
+        {["All", "Pending", "Shipped", "Delivered", "Cancelled"].map((status) => (
           <button
             key={status}
             className={`px-4 py-2 ${
@@ -137,7 +158,7 @@ export default function AdminOrders() {
       {loading ? (
         <p className="text-center text-gray-500">Loading orders...</p>
       ) : (
-        <OrderTable orders={filteredOrders} />
+        <OrderTable orders={filteredOrders} onUpdateStatus={handleUpdateStatus} />
       )}
     </div>
   );
