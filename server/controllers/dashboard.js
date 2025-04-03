@@ -5,6 +5,7 @@ module.exports.getDashboardSummary = async (req, res) => {
 
         const now = new Date();
 
+        // Validate query parameters
         if (filterType === "daily") {
             if (!date) return res.status(400).json({ message: "Date is required for daily filtering." });
             startDate = new Date(date);
@@ -46,20 +47,32 @@ module.exports.getDashboardSummary = async (req, res) => {
             Order.aggregate([
                 { $match: { status: "Completed", orderedOn: { $gte: startDate, $lte: endDate } } },
                 { $group: { _id: null, total: { $sum: "$totalPrice" } } }
-            ]).catch(err => console.error("Error in Total Sales:", err) || []),
+            ]).catch(err => {
+                console.error("Error in Total Sales:", err);
+                return [];
+            }),
 
             // ✅ Total Orders
-            Order.countDocuments({ orderedOn: { $gte: startDate, $lte: endDate } }).catch(err => console.error("Error in Total Orders:", err) || 0),
+            Order.countDocuments({ orderedOn: { $gte: startDate, $lte: endDate } }).catch(err => {
+                console.error("Error in Total Orders:", err);
+                return 0;
+            }),
 
             // ✅ Total Customers
             User.countDocuments({ _id: { $in: await Order.distinct("userId", { orderedOn: { $gte: startDate, $lte: endDate } }) } })
-                .catch(err => console.error("Error in Total Customers:", err) || 0),
+                .catch(err => {
+                    console.error("Error in Total Customers:", err);
+                    return 0;
+                }),
 
             // ✅ Order Summary (Processing, Completed, Canceled)
             Order.aggregate([
                 { $match: { orderedOn: { $gte: startDate, $lte: endDate } } },
                 { $group: { _id: "$status", count: { $sum: 1 } } }
-            ]).catch(err => console.error("Error in Order Summary:", err) || []),
+            ]).catch(err => {
+                console.error("Error in Order Summary:", err);
+                return [];
+            }),
 
             // ✅ Best Sellers
             Order.aggregate([
@@ -89,7 +102,10 @@ module.exports.getDashboardSummary = async (req, res) => {
                         totalRevenue: 1
                     }
                 }
-            ]).catch(err => console.error("Error in Best Sellers:", err) || [])
+            ]).catch(err => {
+                console.error("Error in Best Sellers:", err);
+                return [];
+            })
         ]);
 
         // ✅ Send Response
