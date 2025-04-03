@@ -1,4 +1,4 @@
-const Order = require('../Models/order');
+const Order = require('../Models/Order');
 const User = require('../Models/User');
 
 module.exports.getDashboardSummary = async (req, res) => {
