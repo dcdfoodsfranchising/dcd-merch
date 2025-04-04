@@ -71,33 +71,47 @@ export const updateCartQuantity = async (productId, quantity) => {
 
 
 // Remove item from cart
-export const removeCartItem = async (productId) => {
+export const removeCartItem = async (cartItemId) => {
     try {
-        const token = localStorage.getItem('token'); // Get the auth token from localStorage
-        const response = await axios.delete(`${API_BASE_URL}/cart/${productId}/remove-from-cart`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-        return response.data;
+      const token = localStorage.getItem("token");
+  
+      const response = await axios.patch(
+        `${API_BASE_URL}/cart/${cartItemId}/remove-from-cart`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      return response.data;
     } catch (error) {
-        console.error('Error removing item from cart:', error);
-        throw error;
+      console.error("Error removing item from cart: ", error);
+      throw error;
     }
-};
+  };
+  
+  
+  
 
 // Clear cart
 export const clearCart = async () => {
     try {
         const token = localStorage.getItem('token'); // Get the auth token from localStorage
-        const response = await axios.delete(`${API_BASE_URL}/cart/clear`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
+        const response = await axios.put(
+            `${API_BASE_URL}/cart/clear-cart`,
+            {},  // Empty body, since you're just clearing the cart
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
         return response.data;
     } catch (error) {
         console.error('Error clearing cart:', error);
         throw error;
     }
 };
+
