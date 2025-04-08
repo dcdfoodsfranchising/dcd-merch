@@ -1,4 +1,3 @@
-// CartModal.js
 import { useEffect, useState, useCallback } from "react";
 import {
   getCartItems,
@@ -10,6 +9,7 @@ import { X, Trash, Plus, Minus } from "lucide-react";
 import { useContext } from "react";
 import UserContext from "../../context/UserContext";
 import ConfirmationModal from "./ConfirmationModal"; // Import the new ConfirmationModal
+import { useNavigate } from "react-router-dom";
 
 export default function CartModal({ isOpen, onClose }) {
   const { user } = useContext(UserContext);
@@ -18,6 +18,9 @@ export default function CartModal({ isOpen, onClose }) {
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false); // State to control confirmation modal visibility
   const [itemToRemove, setItemToRemove] = useState(null); // To track which item needs confirmation for removal
+  const [progress, setProgress] = useState(1); // Track the progress (1 = Cart, 2 = Details, 3 = Checkout)
+
+  const navigate = useNavigate();
 
   const fetchCartItems = useCallback(async () => {
     if (!isOpen) return;
@@ -124,8 +127,8 @@ export default function CartModal({ isOpen, onClose }) {
   };
 
   const handleCheckout = () => {
-    console.log("Proceeding to checkout");
-    // Example: navigate('/checkout');
+    setProgress(2); // Move to "Details" step
+    navigate('/delivery'); // Navigate to the delivery details form
   };
 
   if (!isOpen) return null;
@@ -136,6 +139,16 @@ export default function CartModal({ isOpen, onClose }) {
         className="fixed top-0 right-0 w-96 h-full bg-white shadow-lg z-50 transform transition-transform duration-300 ease-in-out"
         style={{ transform: isOpen ? "translateX(0)" : "translateX(100%)" }}
       >
+        {/* Step Progress Bar */}
+        <div className="flex justify-between items-center p-4 border-b">
+          <div className="flex items-center space-x-2">
+            <div className={`w-2 h-2 rounded-full ${progress === 1 ? 'bg-blue-500' : 'bg-gray-300'}`} />
+            <div className={`w-2 h-2 rounded-full ${progress === 2 ? 'bg-blue-500' : 'bg-gray-300'}`} />
+            <div className={`w-2 h-2 rounded-full ${progress === 3 ? 'bg-blue-500' : 'bg-gray-300'}`} />
+          </div>
+          <span className="text-sm text-gray-500">Cart {progress > 1 && '→ Details'} {progress > 2 && '→ Checkout'}</span>
+        </div>
+
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b">
           <h2 className="text-lg font-semibold">Your Cart</h2>
@@ -210,27 +223,27 @@ export default function CartModal({ isOpen, onClose }) {
                 className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 w-1/2 mr-2"
                 disabled={loading}
               >
-                Clear Cart
+                Proceed to Clear Cart
               </button>
               <button
                 onClick={handleCheckout}
                 className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 w-1/2 ml-2"
                 disabled={loading || cartItems.length === 0}
               >
-                Checkout
+                Proceed to Checkout
               </button>
             </div>
           </div>
         )}
-      </div>
 
-      {/* Confirmation Modals */}
-      <ConfirmationModal
-        isOpen={showConfirm}
-        onClose={() => setShowConfirm(false)}
-        onConfirm={confirmRemove} // Confirm item removal
-        message="Are you sure you want to remove this item from your cart?"
-      />
+        {/* Confirmation Modals */}
+        <ConfirmationModal
+          isOpen={showConfirm}
+          onClose={() => setShowConfirm(false)}
+          onConfirm={confirmRemove} // Confirm item removal
+          message="Are you sure you want to remove this item from your cart?"
+        />
+      </div>
     </>
   );
 }

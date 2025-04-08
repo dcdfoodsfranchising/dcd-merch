@@ -12,6 +12,8 @@ import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import AdminProducts from "./pages/AdminProducts";
 import AdminOrders from "./pages/AdminOrders"
 import AdminDashboard from "./pages/AdminDashboard"
+import DeliveryForm from "./components/Delivery/DeliveryForm";
+import CheckoutPage from "./pages/Checkout";
 
 function UserRedirector() {
   const navigate = useNavigate();
@@ -110,6 +112,8 @@ function App() {
               <Route path="/products" element={<Products />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/delivery" element={<DeliveryForm />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
 
               {/* ✅ Protect admin-only routes */}
               <Route path="/admin/products" element={<ProtectedRoute component={AdminProducts} />} />
