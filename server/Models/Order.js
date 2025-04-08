@@ -1,6 +1,20 @@
 const mongoose = require('mongoose');
 
-// Check if the model already exists before defining it
+// ✅ Define deliveryDetailsSchema FIRST
+const deliveryDetailsSchema = new mongoose.Schema({
+    firstName: String,
+    lastName: String,
+    email: String,
+    contactNumber: String,
+    houseNumber: String,
+    street: String,
+    barangay: String,
+    municipality: String,
+    city: String,
+    postalCode: String
+}, { _id: false }); // No need for its own _id since it's embedded
+
+// ✅ Now define the Order schema and use deliveryDetailsSchema
 const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Schema({
   userId: { 
     type: mongoose.Schema.Types.ObjectId, 
@@ -50,7 +64,8 @@ const Order = mongoose.models.Order || mongoose.model('Order', new mongoose.Sche
       type: Date, 
       default: Date.now 
     }
-  }]
+  }],
+  deliveryDetails: deliveryDetailsSchema // ✅ No more ReferenceError
 }));
 
 module.exports = Order;

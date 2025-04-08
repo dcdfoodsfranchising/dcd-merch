@@ -13,10 +13,16 @@ module.exports.createOrder = async (req, res) => {
     try {
         const userId = req.user.id;
 
+        // Fetch user's cart and delivery details
         const cart = await Cart.findOne({ userId }).populate("cartItems.productId");
+        const deliveryDetails = await DeliveryDetails.findOne({ userId });
 
         if (!cart || !cart.cartItems || cart.cartItems.length === 0) {
             return res.status(404).json({ message: "No items in the cart to checkout" });
+        }
+
+        if (!deliveryDetails) {
+            return res.status(400).json({ message: "No delivery details found. Please provide delivery information." });
         }
 
         let totalPrice = 0;
@@ -58,7 +64,8 @@ module.exports.createOrder = async (req, res) => {
             userId,
             productsOrdered,
             totalPrice,
-            status: "Pending"
+            status: "Pending",
+            deliveryDetails, // ✅ Embed delivery details
         });
 
         await order.save();
@@ -69,7 +76,8 @@ module.exports.createOrder = async (req, res) => {
 
         const fullOrder = await Order.findById(order._id)
             .populate({ path: "userId", select: "firstName lastName email" })
-            .populate({ path: "productsOrdered.productId", select: "name description price" });
+            .populate({ path: "productsOrdered.productId", select: "name description price" })
+            .populate("deliveryDetails"); // Fetch embedded delivery details
 
         emitNewOrder(fullOrder); // ✅ Emit full order details
 
