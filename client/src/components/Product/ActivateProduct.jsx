@@ -1,6 +1,6 @@
 import { Button } from 'react-bootstrap';
 import Swal from 'sweetalert2';
-import { activateProduct } from "../../services/productService"; // Make sure to import the service if it's used
+import { activateProduct } from "../../services/productService";
 
 export default function ActivateProduct({ product, fetchData }) {
   const handleActivate = async () => {
