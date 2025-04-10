@@ -7,6 +7,11 @@ module.exports.createOrUpdateDeliveryDetails = async (req, res) => {
         const { userId } = req.user; // Get userId from authenticated user
         const { firstName, lastName, email, contactNumber, houseNumber, street, barangay, municipality, city, postalCode } = req.body;
 
+        // Validate required fields
+        if (!firstName || !lastName || !contactNumber || !houseNumber || !street || !barangay || !municipality || !city || !postalCode) {
+            return res.status(400).json({ message: 'All fields are required' });
+        }
+
         // Check if the user already has delivery details
         let deliveryDetails = await DeliveryDetails.findOne({ userId });
 
@@ -54,8 +59,29 @@ module.exports.createOrUpdateDeliveryDetails = async (req, res) => {
 // Fetch delivery details for the logged-in user
 module.exports.getDeliveryDetails = async (req, res) => {
     try {
-        const { userId } = req.user;
-        
+        const { userId } = req.user; // Get userId from authenticated user
+
+        // Find delivery details by userId
+        const deliveryDetails = await DeliveryDetails.findOne({ userId });
+
+        if (!deliveryDetails) {
+            return res.status(404).json({ message: 'No delivery details found for this user' });
+        }
+
+        return res.status(200).json({ deliveryDetails });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal Server Error', error: error.message });
+    }
+};
+
+// Admin: Get delivery details by user ID
+module.exports.getDeliveryDetailsByAdmin = async (req, res) => {
+    try {
+        const { userId } = req.params; // Get userId from request params
+
+        // Find delivery details by userId
         const deliveryDetails = await DeliveryDetails.findOne({ userId });
 
         if (!deliveryDetails) {
