@@ -1,109 +1,113 @@
 const DeliveryDetails = require('../Models/DeliveryDetails');
-const Order = require('../Models/Order');
 
-// Create or update delivery details for the user
-module.exports.createOrUpdateDeliveryDetails = async (req, res) => {
-    try {
-        const userId = req.user.id; // Get userId from authenticated user
-        if (!userId) {
-            return res.status(400).json({ message: 'User ID is missing or invalid' });
-        }
+// Create or Update Delivery Details
+exports.createOrUpdateDeliveryDetails = async (req, res) => {
+  try {
+    const {
+      firstName,
+      lastName,
+      contactNumber,
+      barangay,
+      city,
+      postalCode,
+      completeAddress,
+      tag,
+      notesForRider
+    } = req.body;
 
-        const { addressId, firstName, lastName, email, contactNumber, houseNumber, street, barangay, municipality, city, postalCode } = req.body;
+    const existingDetails = await DeliveryDetails.findOne({ user: req.user.id });
 
-        // Find user’s delivery details
-        let deliveryDetails = await DeliveryDetails.findOne({ userId });
+    if (existingDetails) {
+      existingDetails.firstName = firstName;
+      existingDetails.lastName = lastName;
+      existingDetails.contactNumber = contactNumber;
+      existingDetails.barangay = barangay;
+      existingDetails.city = city;
+      existingDetails.postalCode = postalCode;
+      existingDetails.completeAddress = completeAddress;
+      existingDetails.tag = tag;
+      existingDetails.notesForRider = notesForRider;
 
-        // If delivery details do not exist, create new deliveryDetails
-        if (!deliveryDetails) {
-            deliveryDetails = new DeliveryDetails({ userId, addresses: [] });
-        }
+      const updated = await existingDetails.save();
+      return res.status(200).json({ message: 'Delivery details updated', deliveryDetails: updated });
+    } else {
+      const newDetails = new DeliveryDetails({
+        user: req.user.id,
+        firstName,
+        lastName,
+        contactNumber,
+        barangay,
+        city,
+        postalCode,
+        completeAddress,
+        tag,
+        notesForRider
+      });
 
-        // If addressId is provided, find the address and update it
-        if (addressId) {
-            const addressIndex = deliveryDetails.addresses.findIndex(address => address._id.toString() === addressId);
-            if (addressIndex !== -1) {
-                // Update existing address
-                deliveryDetails.addresses[addressIndex] = {
-                    firstName,
-                    lastName,
-                    email,
-                    contactNumber,
-                    houseNumber,
-                    street,
-                    barangay,
-                    municipality,
-                    city,
-                    postalCode,
-                };
-                await deliveryDetails.save();
-                return res.status(200).json({ message: 'Delivery address updated successfully', deliveryDetails });
-            } else {
-                return res.status(404).json({ message: 'Address not found' });
-            }
-        } else {
-            // If no addressId, create a new address
-            deliveryDetails.addresses.push({
-                firstName,
-                lastName,
-                email,
-                contactNumber,
-                houseNumber,
-                street,
-                barangay,
-                municipality,
-                city,
-                postalCode,
-            });
-            await deliveryDetails.save();
-            return res.status(201).json({ message: 'New delivery address added successfully', deliveryDetails });
-        }
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Internal Server Error', error: error.message });
+      const savedDetails = await newDetails.save();
+      return res.status(201).json({ message: 'Delivery details created', deliveryDetails: savedDetails });
     }
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 };
 
+// Get own delivery details (User)
+exports.getUserDeliveryDetails = async (req, res) => {
+  try {
+    const details = await DeliveryDetails.findOne({ user: req.user.id });
 
-
-// Fetch delivery details for the logged-in user
-module.exports.getDeliveryDetails = async (req, res) => {
-    try {
-        const userId = req.user.id; // Get userId from authenticated user
-
-        // Find delivery details for the logged-in user
-        const deliveryDetails = await DeliveryDetails.findOne({ userId });
-
-        if (!deliveryDetails || deliveryDetails.addresses.length === 0) {
-            return res.status(404).json({ message: 'No delivery details found for this user' });
-        }
-
-        return res.status(200).json({ deliveryDetails: deliveryDetails.addresses });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Internal Server Error', error: error.message });
+    if (!details) {
+      return res.status(404).json({ message: 'Delivery details not found' });
     }
+
+    res.status(200).json(details);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
+// Delete own delivery details (User)
+exports.deleteDeliveryDetails = async (req, res) => {
+  try {
+    const deleted = await DeliveryDetails.findOneAndDelete({ user: req.user.id });
 
-// Admin: Get delivery details by user ID
-module.exports.getDeliveryDetailsByAdmin = async (req, res) => {
-    try {
-        const { userId } = req.params; // Get userId from request params
-
-        // Find delivery details by userId
-        const deliveryDetails = await DeliveryDetails.findOne({ userId });
-
-        if (!deliveryDetails || deliveryDetails.addresses.length === 0) {
-            return res.status(404).json({ message: 'No delivery details found for this user' });
-        }
-
-        return res.status(200).json({ deliveryDetails: deliveryDetails.addresses });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Internal Server Error', error: error.message });
+    if (!deleted) {
+      return res.status(404).json({ message: 'No delivery details found to delete' });
     }
+
+    res.status(200).json({ message: 'Delivery details deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
+// Get all delivery details (Admin only)
+exports.getDeliveryDetailsForAdmin = async (req, res) => {
+  try {
+    const details = await DeliveryDetails.find().populate('user', 'firstName lastName email');
+
+    if (!details.length) {
+      return res.status(404).json({ message: 'No delivery details found' });
+    }
+
+    res.status(200).json(details);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Get delivery details by ID (Admin only)
+exports.getDeliveryDetailsByIdForAdmin = async (req, res) => {
+  try {
+    const details = await DeliveryDetails.findById(req.params.id).populate('user', 'firstName lastName email');
+
+    if (!details) {
+      return res.status(404).json({ message: 'Delivery details not found' });
+    }
+
+    res.status(200).json(details);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
