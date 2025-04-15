@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, useLocation, Outlet } from "react-router-dom";
 import AppNavbar from "./components/AppNavbar/AppNavbar";
 import Home from "./pages/Home";
 import Products from "./pages/Products";
@@ -13,6 +13,7 @@ import AdminOrders from "./pages/AdminOrders";
 import AdminDashboard from "./pages/AdminDashboard";
 import DetailsForm from "./pages/DetailsForm";
 import CheckoutPage from "./pages/Checkout";
+import ProductDetails from "./pages/ProductDetails";
 
 function UserRedirector() {
   const navigate = useNavigate();
@@ -26,6 +27,28 @@ function UserRedirector() {
 
   return null;
 }
+
+// Layout that includes AppNavbar
+const MainLayout = () => {
+  const location = useLocation();
+  const { user } = React.useContext(UserContext);
+
+  return (
+    <>
+      {!user?.isAdmin && <AppNavbar />}
+      <div className="p-6">
+        <Outlet />
+      </div>
+    </>
+  );
+};
+
+// Layout with no AppNavbar
+const PlainLayout = () => (
+  <div className="p-6">
+    <Outlet />
+  </div>
+);
 
 function App() {
   const [user, setUser] = useState({ id: null, isAdmin: null });
@@ -55,7 +78,7 @@ function App() {
       } catch (error) {
         console.error("Error fetching user details:", error);
       } finally {
-        setLoading(false); // ✅ Ensure loading ends even on error
+        setLoading(false);
       }
     }
 
@@ -74,24 +97,30 @@ function App() {
         <div className="flex">
           {user?.isAdmin && <AdminSidebar isExpanded={isSidebarExpanded} toggleSidebar={toggleSidebar} />}
           <main className={`transition-all duration-300 flex-1 ${user?.isAdmin ? (isSidebarExpanded ? "ml-64" : "ml-20") : "ml-0"}`}>
-            {!user?.isAdmin && <AppNavbar />}
-            <div className="p-6">
-              {loading ? (
-                <div className="text-center text-lg">Loading...</div>
-              ) : (
-                <Routes>
+            {loading ? (
+              <div className="text-center text-lg">Loading...</div>
+            ) : (
+              <Routes>
+                {/* Routes WITH navbar */}
+                <Route element={<MainLayout />}>
                   <Route path="/" element={<Home />} />
                   <Route path="/products" element={<Products />} />
                   <Route path="/register" element={<Register />} />
-                  <Route path="/delivery" element={user?.id ? <DetailsForm /> : <Navigate to="/" />} />
-                  
+                  <Route path="/product/:id" element={<ProductDetails />} />
+                </Route>
+
+                {/* Routes WITHOUT navbar */}
+                <Route element={<PlainLayout />}>
                   <Route path="/checkout" element={<CheckoutPage />} />
-                  <Route path="/admin/products" element={<ProtectedRoute component={AdminProducts} />} />
-                  <Route path="/admin/orders" element={<ProtectedRoute component={AdminOrders} />} />
-                  <Route path="/dashboard" element={<ProtectedRoute component={AdminDashboard} />} />
-                </Routes>
-              )}
-            </div>
+                  <Route path="/delivery" element={user?.id ? <DetailsForm /> : <Navigate to="/" />} />
+                </Route>
+
+                {/* Admin Routes */}
+                <Route path="/admin/products" element={<ProtectedRoute component={AdminProducts} />} />
+                <Route path="/admin/orders" element={<ProtectedRoute component={AdminOrders} />} />
+                <Route path="/dashboard" element={<ProtectedRoute component={AdminDashboard} />} />
+              </Routes>
+            )}
           </main>
         </div>
       </Router>
