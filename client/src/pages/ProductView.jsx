@@ -1,145 +1,115 @@
-import { useState } from "react";
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 
-export default function ProductView({ product }) {
-  const [mainImage, setMainImage] = useState(product.images[0]);
-  const [selectedSize, setSelectedSize] = useState("");
+const ProductView = () => {
+  const { productId } = useParams();
+  const [product, setProduct] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  useEffect(() => {
+    async function fetchProduct() {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/products/${productId}`);
+        const data = await response.json();
+        setProduct(data.product);
+        setSelectedImage(data.product?.images?.[0] || null);
+      } catch (error) {
+        console.error('Error fetching product:', error);
+      }
+    }
+
+    fetchProduct();
+  }, [productId]);
+
+  if (!product) {
+    return <p className="text-center mt-5">Loading product details...</p>;
+  }
 
   return (
     <div className="p-4">
       <div className="lg:max-w-6xl max-w-xl mx-auto">
-        <div className="grid items-start grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* IMAGE VIEW */}
+        <div className="grid items-start grid-cols-1 lg:grid-cols-2 gap-8 max-lg:gap-12 max-sm:gap-8">
+          {/* Image Section */}
           <div className="w-full lg:sticky top-0">
-            <div className="flex gap-4">
-              <div className="flex flex-col gap-2 w-16">
+            <div className="flex flex-col gap-4">
+              {/* Large Image Display */}
+              <div className="flex-1">
+                <img
+                  src={selectedImage}
+                  alt={product.name}
+                  className="w-full aspect-[548/712] object-cover rounded shadow"
+                />
+              </div>
+
+              {/* Thumbnails Carousel on Mobile */}
+              <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible">
                 {product.images.map((img, index) => (
                   <img
                     key={index}
                     src={img}
-                    alt={`Product ${index}`}
-                    className={`aspect-[64/85] object-cover cursor-pointer border-b-2 ${
-                      mainImage === img ? "border-black" : "border-transparent"
+                    alt={`Thumbnail ${index + 1}`}
+                    onClick={() => setSelectedImage(img)}
+                    className={`w-16 h-24 object-cover cursor-pointer border-2 ${
+                      selectedImage === img ? 'border-black' : 'border-transparent'
                     }`}
-                    onClick={() => setMainImage(img)}
                   />
                 ))}
-              </div>
-              <div className="flex-1">
-                <img src={mainImage} alt="Main Product" className="w-full aspect-[548/712] object-cover" />
               </div>
             </div>
           </div>
 
-          {/* PRODUCT INFO */}
+          {/* Product Info */}
           <div className="w-full">
-            <h3 className="text-xl font-semibold text-slate-900">{product.name}</h3>
-            <p className="text-slate-500 mt-2">{product.description}</p>
+            <div>
+              <h3 className="text-lg sm:text-xl font-semibold text-slate-900">{product.name}</h3>
+              <p className="text-slate-500 mt-2 text-sm">{product.description}</p>
 
-            <div className="flex items-center gap-4 mt-6">
-              <h4 className="text-3xl font-semibold text-slate-900">${product.price}</h4>
-              {product.originalPrice && (
-                <p className="text-lg text-slate-500">
-                  <strike>${product.originalPrice}</strike>
-                  <span className="text-sm ml-2">Tax included</span>
+              <div className="flex items-center flex-wrap gap-4 mt-6">
+                <h4 className="text-slate-900 text-2xl sm:text-3xl font-semibold">₱{product.price}</h4>
+                <p className="text-slate-500 text-lg">
+                  <span className="text-sm ml-1.5">Tax included</span>
                 </p>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2 mt-4">
-              <div className="flex items-center px-3 py-1 bg-green-600 text-white rounded-full text-sm">
-                <p>{product.rating}</p>
-                <svg className="w-4 h-4 fill-white ml-1" viewBox="0 0 14 13">
-                  <path d="M7 0L9.47 3.6 13.66 4.84 10.99 8.3 11.11 12.66 7 11.2 2.89 12.66 3 8.3.34 4.84 4.53 3.6 7 0Z" />
-                </svg>
               </div>
-              <p className="text-sm text-slate-500">{product.reviewsCount} reviews</p>
-            </div>
 
-            {/* SIZES */}
-            {product.sizes && (
-              <>
-                <h3 className="text-lg font-semibold mt-6">Sizes</h3>
-                <div className="flex gap-3 mt-3">
-                  {product.sizes.map((size) => (
-                    <button
-                      key={size}
-                      className={`w-10 h-9 border text-sm ${
-                        selectedSize === size
-                          ? "border-blue-600"
-                          : "border-slate-300 hover:border-blue-600"
-                      }`}
-                      onClick={() => setSelectedSize(size)}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
+              <p className="text-slate-500 text-sm mt-2">Available Quantity: {product.quantity}</p>
 
-            {/* ACTION BUTTONS */}
-            <div className="mt-6 flex gap-4">
-              <button className="w-1/2 px-4 py-3 bg-slate-100 hover:bg-slate-200 border text-sm font-medium">
-                Add to Wishlist
-              </button>
-              <button className="w-1/2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">
-                Add to Cart
-              </button>
-            </div>
-
-            {/* DELIVERY PIN */}
-            <div className="mt-6">
-              <h3 className="text-lg font-semibold">Select Delivery Location</h3>
-              <p className="text-sm text-slate-500 mt-1">
-                Enter the pincode of your area to check product availability.
-              </p>
-              <div className="flex gap-2 mt-4 max-w-sm">
-                <input
-                  type="number"
-                  placeholder="Enter pincode"
-                  className="bg-slate-100 px-4 py-2.5 text-sm w-full outline-none"
-                />
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 text-sm">
-                  Apply
+              <div className="mt-6 flex flex-wrap gap-4">
+                <button
+                  type="button"
+                  className="px-4 py-3 w-[45%] border border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-900 text-sm font-medium"
+                >
+                  Add to wishlist
+                </button>
+                <button
+                  type="button"
+                  className={`px-4 py-3 w-[45%] text-sm font-medium ${
+                    product.quantity > 0
+                      ? 'border border-blue-600 bg-blue-600 hover:bg-blue-700 text-white'
+                      : 'border border-slate-400 bg-slate-300 text-slate-500 cursor-not-allowed'
+                  }`}
+                  disabled={product.quantity === 0}
+                >
+                  {product.quantity > 0 ? 'Add to cart' : 'Out of Stock'}
                 </button>
               </div>
             </div>
 
-            {/* PRODUCT INFO ACCORDION */}
-            <div className="mt-8">
-              <Accordion title="Product details" content={product.details} />
-              <Accordion title="Vendor details" content={product.vendor} />
-              <Accordion title="Return and exchange policy" content={product.returnPolicy} />
+            <hr className="my-6 border-slate-300" />
+
+            {/* Description */}
+            <div>
+              <h3 className="text-lg sm:text-xl font-semibold text-slate-900">Product Information</h3>
+              <div className="mt-4">
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  {product.description || 'No additional product information available.'}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
 
-function Accordion({ title, content }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="border-b">
-      <button
-        className="w-full py-3 text-left text-sm font-semibold flex items-center"
-        onClick={() => setOpen(!open)}
-      >
-        {title}
-        <svg
-          className={`ml-auto w-4 h-4 transform transition-transform ${
-            open ? "rotate-180" : "rotate-90"
-          }`}
-          viewBox="0 0 24 24"
-        >
-          <path
-            d="M12 18.17a2.38 2.38 0 0 1-1.68-.7l-9.52-9.52a2.38 2.38 0 1 1 3.36-3.36l7.84 7.84 7.84-7.84a2.38 2.38 0 1 1 3.36 3.36l-9.52 9.52a2.38 2.38 0 0 1-1.68.7z"
-            fill="currentColor"
-          />
-        </svg>
-      </button>
-      {open && <div className="pb-4 text-sm text-slate-500">{content}</div>}
-    </div>
-  );
-}
+export default ProductView;

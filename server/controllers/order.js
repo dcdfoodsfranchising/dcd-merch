@@ -38,15 +38,19 @@ module.exports.createOrder = async (req, res) => {
                 return res.status(404).json({ error: `Product not found: ${item.productId._id}` });
             }
 
-            if (product.quantity < item.quantity) {
+            // Find matching variant
+            const variant = product.variants.find(v => v.name === item.variantName);
+            if (!variant) {
+                return res.status(400).json({ error: `Variant '${item.variantName}' not found for ${product.name}` });
+            }
+            if (variant.quantity < item.quantity) {
                 return res.status(400).json({
-                    error: `Not enough stock for ${product.name}. Available: ${product.quantity}`
+                    error: `Not enough stock for ${product.name} - ${variant.name}. Available: ${variant.quantity}`
                 });
             }
-
-            // ✅ Deduct stock & save
-            product.quantity -= item.quantity;
+            variant.quantity -= item.quantity;
             await product.save();
+
 
             // ✅ Emit product update event
             emitProductUpdate(product);
@@ -232,8 +236,11 @@ module.exports.cancelOrder = async (req, res) => {
             const product = await Product.findById(item.productId);
 
             if (product) {
-                product.quantity += item.quantity; // ✅ Restock
-                await product.save();
+                const variant = product.variants.find(v => v.name === item.variantName);
+                if (variant) {
+                    variant.quantity += item.quantity;
+                    await product.save();
+                }
             }
         }
 

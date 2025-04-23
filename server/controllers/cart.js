@@ -50,47 +50,49 @@ module.exports.getCartItems = async (req, res) => {
 // Add item to cart
 module.exports.addToCart = async (req, res) => {
     try {
-        const { productId, quantity } = req.body;
+        const { productId, variantName, quantity } = req.body;
         const userId = req.user.id;
 
-        // Check if quantity is a number and greater than 0
         if (typeof quantity !== 'number' || quantity <= 0) {
             return res.status(400).json({ message: 'Invalid quantity' });
         }
 
-        // Find the cart for the user
-        let cart = await Cart.findOne({ userId });
+        if (!variantName) {
+            return res.status(400).json({ message: 'variantName is required' });
+        }
 
+        // Find or create cart
+        let cart = await Cart.findOne({ userId });
         if (!cart) {
-            // If no cart exists, create a new one
             cart = new Cart({ userId, cartItems: [], totalPrice: 0 });
         }
 
-        // Retrieve the product's price from the database
         const product = await Product.findById(productId);
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        // Calculate the subtotal (price * quantity)
-        const subtotal = product.price * quantity;
+        const variant = product.variants.find(v => v.name === variantName);
+        if (!variant) {
+            return res.status(404).json({ message: 'Variant not found' });
+        }
 
-        // Check if the product already exists in the cart
-        const itemIndex = cart.cartItems.findIndex(item => item.productId.toString() === productId);
+        const subtotal = variant.price * quantity;
+
+        const itemIndex = cart.cartItems.findIndex(item =>
+            item.productId.toString() === productId &&
+            item.variantName === variantName
+        );
 
         if (itemIndex > -1) {
-            // If the product exists, update the quantity and subtotal
             cart.cartItems[itemIndex].quantity += quantity;
             cart.cartItems[itemIndex].subtotal += subtotal;
         } else {
-            // If the product does not exist, add it to the cart
-            cart.cartItems.push({ productId, quantity, subtotal });
+            cart.cartItems.push({ productId, variantName, quantity, subtotal });
         }
 
-        // Update the total price
         cart.totalPrice = cart.cartItems.reduce((total, item) => total + item.subtotal, 0);
 
-        // Save the cart
         await cart.save();
 
         res.status(200).json({
@@ -107,6 +109,93 @@ module.exports.addToCart = async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error', error });
     }
 };
+
+module.exports.addToCart = async (req, res) => {
+    try {
+        const { productId, variantName, quantity } = req.body;
+        const userId = req.user.id;
+
+        if (typeof quantity !== 'number' || quantity <= 0) {
+            return res.status(400).json({ message: 'Invalid quantity' });
+        }
+
+        // Find or create cart
+        let cart = await Cart.findOne({ userId });
+        if (!cart) {
+            cart = new Cart({ userId, cartItems: [], totalPrice: 0 });
+        }
+
+        const product = await Product.findById(productId);
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        let price, availableQuantity;
+        let resolvedVariantName = variantName;
+
+        if (product.variants && product.variants.length > 0) {
+            if (!variantName) {
+                return res.status(400).json({ message: 'variantName is required for products with variants' });
+            }
+
+            const variant = product.variants.find(v => v.name === variantName);
+            if (!variant) {
+                return res.status(404).json({ message: 'Variant not found' });
+            }
+
+            price = variant.price;
+            availableQuantity = variant.quantity;
+        } else {
+            // No variants, use root-level price/quantity
+            price = product.price;
+            availableQuantity = product.quantity;
+            resolvedVariantName = 'Default';
+        }
+
+        // Optional: check if quantity exceeds stock
+        if (quantity > availableQuantity) {
+            return res.status(400).json({ message: 'Requested quantity exceeds available stock' });
+        }
+
+        const subtotal = price * quantity;
+
+        const itemIndex = cart.cartItems.findIndex(item =>
+            item.productId.toString() === productId &&
+            item.variantName === resolvedVariantName
+        );
+
+        if (itemIndex > -1) {
+            cart.cartItems[itemIndex].quantity += quantity;
+            cart.cartItems[itemIndex].subtotal += subtotal;
+        } else {
+            cart.cartItems.push({
+                productId,
+                variantName: resolvedVariantName,
+                quantity,
+                subtotal
+            });
+        }
+
+        cart.totalPrice = cart.cartItems.reduce((total, item) => total + item.subtotal, 0);
+
+        await cart.save();
+
+        res.status(200).json({
+            message: 'Item added to cart successfully',
+            cart: {
+                _id: cart._id,
+                userId: cart.userId,
+                cartItems: cart.cartItems,
+                totalPrice: cart.totalPrice,
+                orderedOn: cart.orderedOn
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Internal Server Error', error });
+    }
+};
+
+
 
 
 

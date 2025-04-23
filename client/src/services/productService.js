@@ -96,13 +96,11 @@ export const updateProductInfo = async (productId, productData) => {
 
 export const getProductById = async (id) => {
   try {
-      const response = await fetch(`${API_BASE_URL}/products/${id}`); // Use 'id' here instead of 'productId'
-      const product = await response.json();
-      console.log("API response:", product); // Log API response
-      return product;
+    const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/products/${id}`);
+    const data = await response.json(); // ✅ Define `data` here
+    return data.product;
   } catch (error) {
-      console.error("Error fetching product:", error);
-      throw error;
+    console.error("Error fetching product by ID:", error);
   }
 };
 

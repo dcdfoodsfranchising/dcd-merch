@@ -13,7 +13,7 @@ import AdminOrders from "./pages/AdminOrders";
 import AdminDashboard from "./pages/AdminDashboard";
 import DetailsForm from "./pages/DetailsForm";
 import CheckoutPage from "./pages/Checkout";
-import ProductDetails from "./pages/ProductDetails";
+import ProductView from "./pages/ProductView";
 
 function UserRedirector() {
   const navigate = useNavigate();
@@ -36,7 +36,7 @@ const MainLayout = () => {
   return (
     <>
       {!user?.isAdmin && <AppNavbar />}
-      <div className="p-6">
+      <div className="pt-24">
         <Outlet />
       </div>
     </>
@@ -106,7 +106,8 @@ function App() {
                   <Route path="/" element={<Home />} />
                   <Route path="/products" element={<Products />} />
                   <Route path="/register" element={<Register />} />
-                  <Route path="/product/:id" element={<ProductDetails />} />
+                  <Route path="/product/:productId" element={<ProductView />} />
+
                 </Route>
 
                 {/* Routes WITHOUT navbar */}

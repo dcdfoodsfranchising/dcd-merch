@@ -6,15 +6,15 @@ const cloudinary = require('../config/cloudinary');
 // Create a new product
 module.exports.createProduct = async (req, res) => {
     try {
-        const { name, description, price, quantity, isFeatured, isActive } = req.body;
+        const { name, description, variants, isFeatured, isActive } = req.body;
         let imageUrls = [];
 
-        // Check if files are uploaded
+        // Upload images to Cloudinary if provided
         if (req.files && req.files.length > 0) {
             imageUrls = await Promise.all(
                 req.files.map(async (file) => {
                     const result = await cloudinary.uploader.upload(file.path);
-                    return result.secure_url; // Store the Cloudinary URL
+                    return result.secure_url;
                 })
             );
         }
@@ -22,11 +22,10 @@ module.exports.createProduct = async (req, res) => {
         const product = new Product({
             name,
             description,
-            price,
-            quantity: quantity || 0,
-            images: imageUrls, // Save multiple images
+            images: imageUrls,
             isFeatured: isFeatured || false,
-            isActive: isActive !== undefined ? isActive : true
+            isActive: isActive !== undefined ? isActive : true,
+            variants: variants || [] // Ensure variants are included
         });
 
         await product.save();
@@ -36,6 +35,8 @@ module.exports.createProduct = async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 };
+
+
 // Retrieve all products
 module.exports.getAllProducts = async (req, res) => {
     try {
@@ -87,10 +88,10 @@ module.exports.singleProduct = async (req, res) => {
         }
         res.status(200).json({ product });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error.message }); a
     }
-};
-
+} ;
+  
 // Update product info
 module.exports.updateProductInfo = async (req, res) => {
     try {
@@ -179,15 +180,20 @@ module.exports.searchProductsByPrice = async (req, res) => {
     }
 };
 
-// Add Stock
+// Add Stock to a Specific Variant
 module.exports.addStock = async (req, res) => {
     try {
-        const { quantity } = req.body;
+        const { variantName, quantity } = req.body;
         const product = await Product.findById(req.params.productId);
 
         if (!product) return res.status(404).json({ error: "Product not found" });
 
-        product.quantity += quantity; // ✅ Increase stock
+        const variant = product.variants.find(v => v.name === variantName);
+        if (!variant) {
+            return res.status(404).json({ error: "Variant not found" });
+        }
+
+        variant.quantity += parseInt(quantity, 10);
         await product.save();
 
         res.status(200).json({ message: "Stock updated", product });
@@ -195,6 +201,7 @@ module.exports.addStock = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
 
 
 // Toggle Featured Product
