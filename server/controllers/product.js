@@ -6,8 +6,24 @@ const cloudinary = require('../config/cloudinary');
 // Create a new product
 module.exports.createProduct = async (req, res) => {
     try {
-        const { name, description, variants, isFeatured, isActive } = req.body;
+        const { name, description, isFeatured, isActive } = req.body;
+        let { variants } = req.body;
         let imageUrls = [];
+
+        // Validate required fields
+        if (!name) {
+            return res.status(400).json({ message: "Name is required" });
+        }
+
+        // Parse variants if it's a string
+        if (typeof variants === 'string') {
+            variants = JSON.parse(variants);
+        }
+
+        // Validate variants
+        if (!Array.isArray(variants) || variants.some(v => !v.name || !v.price || !v.quantity)) {
+            return res.status(400).json({ message: "Each variant must have a name, price, and quantity" });
+        }
 
         // Upload images to Cloudinary if provided
         if (req.files && req.files.length > 0) {
@@ -25,7 +41,7 @@ module.exports.createProduct = async (req, res) => {
             images: imageUrls,
             isFeatured: isFeatured || false,
             isActive: isActive !== undefined ? isActive : true,
-            variants: variants || [] // Ensure variants are included
+            variants // Save variants with their prices
         });
 
         await product.save();
@@ -95,19 +111,29 @@ module.exports.singleProduct = async (req, res) => {
 // Update product info
 module.exports.updateProductInfo = async (req, res) => {
     try {
-        const product = await Product.findByIdAndUpdate(
-            req.params.productId,
-            req.body,
-            { new: true }
-        );
+        // Extract the product ID from the request parameters
+        const { productId } = req.params;
+
+        // Check if the product exists
+        const product = await Product.findById(productId);
         if (!product) {
             return res.status(404).json({ error: 'Product not found' });
         }
+
+        // Update only the fields provided in the request body
+        Object.keys(req.body).forEach((key) => {
+            product[key] = req.body[key];
+        });
+
+        // Save the updated product
+        await product.save();
+
         res.status(200).json({
             message: "Product updated successfully",
             updatedProduct: product
         });
     } catch (error) {
+        console.error("Error updating product:", error);
         res.status(400).json({ error: error.message });
     }
 };
