@@ -14,6 +14,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import DetailsForm from "./pages/DetailsForm";
 import CheckoutPage from "./pages/Checkout";
 import ProductView from "./pages/ProductView";
+import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 
 function UserRedirector() {
   const navigate = useNavigate();
@@ -91,41 +92,42 @@ function App() {
   };
 
   return (
-    <UserContext.Provider value={{ user, setUser, unsetUser, cart, setCart }}>
-      <Router>
-        <UserRedirector />
-        <div className="flex">
-          {user?.isAdmin && <AdminSidebar isExpanded={isSidebarExpanded} toggleSidebar={toggleSidebar} />}
-          <main className={`transition-all duration-300 flex-1 ${user?.isAdmin ? (isSidebarExpanded ? "ml-64" : "ml-20") : "ml-0"}`}>
-            {loading ? (
-              <div className="text-center text-lg">Loading...</div>
-            ) : (
-              <Routes>
-                {/* Routes WITH navbar */}
-                <Route element={<MainLayout />}>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/product/:productId" element={<ProductView />} />
+    <GoogleReCaptchaProvider reCaptchaKey={process.env.REACT_APP_RECAPTCHA_SITE_KEY}>
+      <UserContext.Provider value={{ user, setUser, unsetUser, cart, setCart }}>
+        <Router>
+          <UserRedirector />
+          <div className="flex">
+            {user?.isAdmin && <AdminSidebar isExpanded={isSidebarExpanded} toggleSidebar={toggleSidebar} />}
+            <main className={`transition-all duration-300 flex-1 ${user?.isAdmin ? (isSidebarExpanded ? "ml-64" : "ml-20") : "ml-0"}`}>
+              {loading ? (
+                <div className="text-center text-lg">Loading...</div>
+              ) : (
+                <Routes>
+                  {/* Routes WITH navbar */}
+                  <Route element={<MainLayout />}>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/products" element={<Products />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/product/:productId" element={<ProductView />} />
+                  </Route>
 
-                </Route>
+                  {/* Routes WITHOUT navbar */}
+                  <Route element={<PlainLayout />}>
+                    <Route path="/checkout" element={<CheckoutPage />} />
+                    <Route path="/delivery" element={user?.id ? <DetailsForm /> : <Navigate to="/" />} />
+                  </Route>
 
-                {/* Routes WITHOUT navbar */}
-                <Route element={<PlainLayout />}>
-                  <Route path="/checkout" element={<CheckoutPage />} />
-                  <Route path="/delivery" element={user?.id ? <DetailsForm /> : <Navigate to="/" />} />
-                </Route>
-
-                {/* Admin Routes */}
-                <Route path="/admin/products" element={<ProtectedRoute component={AdminProducts} />} />
-                <Route path="/admin/orders" element={<ProtectedRoute component={AdminOrders} />} />
-                <Route path="/dashboard" element={<ProtectedRoute component={AdminDashboard} />} />
-              </Routes>
-            )}
-          </main>
-        </div>
-      </Router>
-    </UserContext.Provider>
+                  {/* Admin Routes */}
+                  <Route path="/admin/products" element={<ProtectedRoute component={AdminProducts} />} />
+                  <Route path="/admin/orders" element={<ProtectedRoute component={AdminOrders} />} />
+                  <Route path="/dashboard" element={<ProtectedRoute component={AdminDashboard} />} />
+                </Routes>
+              )}
+            </main>
+          </div>
+        </Router>
+      </UserContext.Provider>
+    </GoogleReCaptchaProvider>
   );
 }
 

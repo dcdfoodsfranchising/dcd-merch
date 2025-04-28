@@ -4,6 +4,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import UserContext from "../../context/UserContext";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
 export default function Login({ onClose }) {
   const { setUser } = useContext(UserContext);
@@ -11,30 +12,57 @@ export default function Login({ onClose }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-
+  
+    if (!executeRecaptcha) {
+      toast.error("reCAPTCHA is not ready. Please try again later.");
+      setLoading(false);
+      return;
+    }
+  
     try {
+      // Execute reCAPTCHA v3 and get the token
+      const captchaToken = await executeRecaptcha("login");
+      console.log("CAPTCHA Token:", captchaToken);
+  
+      const requestPayload = { email, password, captchaToken };
+      console.log("Request Payload:", requestPayload);
+  
       const response = await axios.post(
         `${process.env.REACT_APP_API_BASE_URL}/users/login`,
-        { email, password },
+        requestPayload,
         { headers: { "Content-Type": "application/json" } }
       );
-
+  
       console.log("🔑 API Login Response:", response.data);
-
-      if (response.data.access) {
-        localStorage.setItem("token", response.data.access);
-        await retrieveUserDetails(response.data.access);
+  
+      if (response.data.accessToken) {
+        localStorage.setItem("token", response.data.accessToken);
+        await retrieveUserDetails(response.data.accessToken);
       } else {
-        toast.error("Login failed. Please try again.");
+        toast.error(response.data.message || "Login failed. Please try again.");
         setLoading(false);
       }
     } catch (error) {
-      console.error("❌ Login Error:", error);
-      toast.error("Invalid credentials. Try again.");
+      console.error("❌ Login Error Response:", error.response?.data);
+      const errorMessage =
+        error.response?.data?.message || "An error occurred. Please try again later.";
+  
+      // Handle specific error messages
+      if (error.response?.status === 403) {
+        toast.error("Please confirm your email before logging in.");
+      } else if (error.response?.status === 400) {
+        toast.error("CAPTCHA verification failed. Please try again.");
+      } else if (error.response?.status === 401) {
+        toast.error("Invalid email or password.");
+      } else {
+        toast.error(errorMessage);
+      }
+  
       setLoading(false);
     }
   };
