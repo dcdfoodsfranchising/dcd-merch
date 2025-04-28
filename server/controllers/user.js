@@ -37,16 +37,15 @@ module.exports.registerUser = async (req, res) => {
             await sendEmail(
                 req.body.email,
                 "Email Confirmation",
-                `
-                <p>Hello ${req.body.firstName},</p>
-                <p>Please confirm your email by clicking the link below:</p>
-                <p><a href="${confirmationLink}" style="color: #007BFF; text-decoration: none; font-weight: bold;">Confirm Email</a></p>
-                <p>If the link above does not work, you can also use the following link:</p>
-                <p>${confirmationLink}</p>
-                <p>Alternatively, you can manually enter the confirmation code:</p>
-                <p><strong>Confirmation Code: ${confirmationCode}</strong></p>
-                <p>Thank you!</p>
-                `
+                `Hello ${req.body.firstName},
+
+Here is your new confirmation code:
+
+Code: ${confirmationCode}
+
+Link: ${confirmationLink}
+
+Thank you!`
             );
         } catch (err) {
             return res.status(500).send({
