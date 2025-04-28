@@ -163,6 +163,7 @@ module.exports.loginUser = async (req, res) => {
                 }
             }
         );
+        console.log("CAPTCHA Verification Response:", captchaResponse.data);
 
         if (!captchaResponse.data.success) {
             return res.status(400).send({ message: "CAPTCHA verification failed" });
