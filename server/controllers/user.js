@@ -39,10 +39,12 @@ module.exports.registerUser = async (req, res) => {
                 "Email Confirmation",
                 `
                 <p>Hello ${req.body.firstName},</p>
-                <p>Please confirm your email by clicking the button below:</p>
-                <a href="${confirmationLink}" style="display: inline-block; padding: 10px 20px; color: white; background-color: #007BFF; text-decoration: none; border-radius: 5px;">Confirm Email</a>
-                <p>If the button above does not work, you can also use the following link:</p>
+                <p>Please confirm your email by clicking the link below:</p>
+                <p><a href="${confirmationLink}" style="color: #007BFF; text-decoration: none; font-weight: bold;">Confirm Email</a></p>
+                <p>If the link above does not work, you can also use the following link:</p>
                 <p>${confirmationLink}</p>
+                <p>Alternatively, you can manually enter the confirmation code:</p>
+                <p><strong>Confirmation Code: ${confirmationCode}</strong></p>
                 <p>Thank you!</p>
                 `
             );
