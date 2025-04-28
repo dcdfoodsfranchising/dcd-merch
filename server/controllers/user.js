@@ -18,9 +18,14 @@ module.exports.registerUser = async (req, res) => {
             });
         }
 
-        const existingUser = await User.findOne({ email: req.body.email });
+        const existingUser = await User.findOne({ username: req.body.username });
         if (existingUser) {
-            return res.status(400).send({ message: 'User already exists' });
+            return res.status(400).send({ message: 'Username is already taken. Please choose a different one.' });
+        }
+
+        const existingEmail = await User.findOne({ email: req.body.email });
+        if (existingEmail && existingEmail.isEmailConfirmed) {
+            return res.status(400).send({ message: 'Email is already registered and confirmed.' });
         }
 
         const confirmationCode = Math.floor(100000 + Math.random() * 900000); // Generate a 6-digit code
@@ -32,7 +37,14 @@ module.exports.registerUser = async (req, res) => {
             await sendEmail(
                 req.body.email,
                 "Email Confirmation",
-                `Hello ${req.body.firstName},\n\nPlease confirm your email by using the code below or clicking the link:\n\nCode: ${confirmationCode}\n\nLink: ${confirmationLink}\n\nThank you!`
+                `
+                <p>Hello ${req.body.firstName},</p>
+                <p>Please confirm your email by clicking the button below:</p>
+                <a href="${confirmationLink}" style="display: inline-block; padding: 10px 20px; color: white; background-color: #007BFF; text-decoration: none; border-radius: 5px;">Confirm Email</a>
+                <p>If the button above does not work, you can also use the following link:</p>
+                <p>${confirmationLink}</p>
+                <p>Thank you!</p>
+                `
             );
         } catch (err) {
             return res.status(500).send({
@@ -61,6 +73,10 @@ module.exports.registerUser = async (req, res) => {
             message: "Registered successfully. Please confirm your email to activate your account."
         });
     } catch (err) {
+        if (err.code === 11000) {
+            const duplicateField = Object.keys(err.keyValue)[0];
+            return res.status(400).send({ message: `${duplicateField.charAt(0).toUpperCase() + duplicateField.slice(1)} is already taken. Please choose a different one.` });
+        }
         res.status(500).send({ success: false, message: err.message });
     }
 };
@@ -163,12 +179,21 @@ module.exports.loginUser = async (req, res) => {
                 }
             }
         );
+
         console.log("CAPTCHA Verification Response:", captchaResponse.data);
 
+        // Check if CAPTCHA verification was successful
         if (!captchaResponse.data.success) {
             return res.status(400).send({ message: "CAPTCHA verification failed" });
         }
 
+        // Check the score returned by reCAPTCHA v3
+        const { score, action } = captchaResponse.data;
+        if (score < 0.5 || action !== "login") {
+            return res.status(400).send({ message: "Suspicious activity detected. CAPTCHA verification failed." });
+        }
+
+        // Find the user by email
         const user = await User.findOne({ email });
 
         if (!user) {
@@ -179,6 +204,7 @@ module.exports.loginUser = async (req, res) => {
             return res.status(403).send({ message: "Please confirm your email before logging in." });
         }
 
+        // Check if the password is correct
         const isPasswordCorrect = bcrypt.compareSync(password, user.password);
 
         if (isPasswordCorrect) {
@@ -197,6 +223,7 @@ module.exports.loginUser = async (req, res) => {
             return res.status(401).send({ error: "Email and password do not match" });
         }
     } catch (err) {
+        console.error("❌ Login Error:", err.message);
         return res.status(500).send({ message: "Internal Server Error", error: err.message });
     }
 };
