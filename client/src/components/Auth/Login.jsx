@@ -27,10 +27,8 @@ export default function Login({ onClose }) {
     try {
       // Execute reCAPTCHA v3 and get the token
       const captchaToken = await executeRecaptcha("login");
-      console.log("CAPTCHA Token:", captchaToken);
   
       const requestPayload = { email, password, captchaToken };
-      console.log("Request Payload:", requestPayload);
   
       const response = await axios.post(
         `${process.env.REACT_APP_API_BASE_URL}/users/login`,
@@ -38,7 +36,6 @@ export default function Login({ onClose }) {
         { headers: { "Content-Type": "application/json" } }
       );
   
-      console.log("🔑 API Login Response:", response.data);
   
       if (response.data.accessToken) {
         localStorage.setItem("token", response.data.accessToken);
@@ -73,6 +70,8 @@ export default function Login({ onClose }) {
         `${process.env.REACT_APP_API_BASE_URL}/users/details`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      console.log(token)
 
       const userData = response.data.user;
       setUser({ id: userData._id, isAdmin: userData.isAdmin });

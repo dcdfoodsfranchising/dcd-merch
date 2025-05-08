@@ -6,7 +6,7 @@ import MobileMenu from "./MobileMenu";
 import ProfileDropdown from "./ProfileDropdown";
 import ProfileModal from "../Auth/ProfileModal";
 import LogoutModal from "../Auth/LogoutModal";
-import CartModal from "../UserCart/CartModal"; // Import CartModal
+import CartModal from "../UserCart/CartModal"; 
 
 export default function AppNavbar() {
   const navigate = useNavigate();
@@ -44,9 +44,14 @@ export default function AppNavbar() {
           </button>
 
           {/* Desktop Navigation Icons */}
-          <NavIcons 
-            onProfileClick={user?.id ? toggleProfileDropdown : openProfileModal} 
-            onCartClick={() => setCartModalOpen(true)} // Open Cart Modal on Cart Click
+          <NavIcons
+            onProfileClick={(newState) => {
+              toggleProfileDropdown(newState); // Update dropdown state in the parent
+            }}
+            onCartClick={() => setCartModalOpen(true)}
+            profilePicture={user?.profilePicture}
+            username={user?.username}
+            isDropdownActive={profileDropdownOpen} // Pass the dropdown state
           />
         </div>
       </nav>
@@ -56,7 +61,15 @@ export default function AppNavbar() {
 
       {/* Profile Dropdown */}
       {user?.id && profileDropdownOpen && (
-        <ProfileDropdown onOrdersClick={() => navigate("/orders")} onLogoutClick={openLogoutModal} />
+        <ProfileDropdown 
+          username={user.username} // Pass the username to ProfileDropdown
+          onOrdersClick={() => navigate("/orders")} 
+          onLogoutClick={openLogoutModal} 
+          onUpdateUsername={(newUsername) => {
+            // Handle username update logic here
+            console.log("Updated username:", newUsername);
+          }}
+        />
       )}
 
       {/* Modals */}
