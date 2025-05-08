@@ -338,32 +338,40 @@ module.exports.updatePassword = async (req, res) => {
 // Upload Profile Picture
 module.exports.uploadProfilePicture = async (req, res) => {
     try {
-        const file = req.file;
-
-        if (!file) {
-            return res.status(400).send({ message: "No file uploaded" });
-        }
-
-        const result = await cloudinary.uploader.upload(file.path);
-
-        const user = await User.findByIdAndUpdate(
-            req.user.id,
-            { profilePicture: result.secure_url },
-            { new: true }
-        );
-
-        if (!user) {
-            return res.status(404).send({ message: "User not found" });
-        }
-
-        res.status(200).send({
-            message: "Profile picture uploaded successfully",
-            profilePicture: user.profilePicture
-        });
+      const file = req.file;
+  
+      if (!file) {
+        console.log("No file uploaded");
+        return res.status(400).send({ message: "No file uploaded" });
+      }
+  
+      console.log("Uploaded file details:", file);
+  
+      const { path } = file; // Use 'path' instead of 'secure_url'
+      console.log("Cloudinary URL (path):", path);
+  
+      const user = await User.findByIdAndUpdate(
+        req.user.id,
+        { profilePicture: path }, // Save 'path' as the profilePicture
+        { new: true }
+      );
+  
+      if (!user) {
+        console.log("User not found");
+        return res.status(404).send({ message: "User not found" });
+      }
+  
+      console.log("Updated user:", user);
+  
+      res.status(200).send({
+        message: "Profile picture uploaded successfully",
+        profilePicture: user.profilePicture,
+      });
     } catch (err) {
-        res.status(500).send({ message: "Internal Server Error", error: err.message });
+      console.error("Error uploading profile picture:", err.message);
+      res.status(500).send({ message: "Internal Server Error", error: err.message });
     }
-};
+  };
 
 // Update Username
 module.exports.updateUsername = async (req, res) => {

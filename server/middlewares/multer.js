@@ -5,10 +5,17 @@ const cloudinary = require('../config/cloudinary'); // Import Cloudinary setup
 // Set up Cloudinary storage for Multer
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: 'uploads', // Change folder name as needed
-    format: ['jpg', 'png', 'jpeg'], // Corrected from allowed_formats
-    public_id: (req, file) => `product-${Date.now()}-${file.originalname}`, // Improved naming
+  params: async (req, file) => {
+    console.log("File being uploaded:", file);
+    console.log("Folder:", req.body.folder || "uploads");
+
+    const folder = req.body.folder || "uploads";
+    return {
+      folder: folder,
+      resource_type: "image",
+      allowed_formats: ["jpg", "png", "jpeg"],
+      public_id: `user-${Date.now()}-${file.originalname}`,
+    };
   },
 });
 
