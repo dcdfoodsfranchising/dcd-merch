@@ -64,31 +64,39 @@ function App() {
   useEffect(() => {
     async function fetchUser() {
       try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setUser({ id: null, isAdmin: null, profilePicture: null, username: null });
+          setLoading(false);
+          return;
+        }
+  
         const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/users/details`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         });
+  
         const data = await response.json();
-
+  
         if (data.user?._id) {
           setUser({
             id: data.user._id,
             isAdmin: data.user.isAdmin,
             profilePicture: data.user.profilePicture || null,
-             // Include profilePicture
-             username: data.user.username || "Guest",
+            username: data.user.username || "Guest",
           });
         } else {
-          setUser({ id: null, isAdmin: null, profilePicture: null });
+          setUser({ id: null, isAdmin: null, profilePicture: null, username: null });
         }
       } catch (error) {
         console.error("Error fetching user details:", error);
+        setUser({ id: null, isAdmin: null, profilePicture: null, username: null });
       } finally {
         setLoading(false);
       }
     }
-
+  
     fetchUser();
   }, []);
 

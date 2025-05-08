@@ -6,7 +6,8 @@ import MobileMenu from "./MobileMenu";
 import ProfileDropdown from "./ProfileDropdown";
 import ProfileModal from "../Auth/ProfileModal";
 import LogoutModal from "../Auth/LogoutModal";
-import CartModal from "../UserCart/CartModal"; 
+import CartModal from "../UserCart/CartModal";
+import Login from "../Auth/Login"; // Import Login component
 
 export default function AppNavbar() {
   const navigate = useNavigate();
@@ -26,6 +27,15 @@ export default function AppNavbar() {
   } = useNavbarLogic();
 
   const [cartModalOpen, setCartModalOpen] = useState(false);
+  const [loginModalOpen, setLoginModalOpen] = useState(false); // State for Login Modal
+
+  const handleProfileClick = () => {
+    if (user?.id) {
+      toggleProfileDropdown(!profileDropdownOpen); // Toggle dropdown if user is logged in
+    } else {
+      setLoginModalOpen(true); // Open login modal if user is not logged in
+    }
+  };
 
   return (
     <>
@@ -44,15 +54,27 @@ export default function AppNavbar() {
           </button>
 
           {/* Desktop Navigation Icons */}
-          <NavIcons
-            onProfileClick={(newState) => {
-              toggleProfileDropdown(newState); // Update dropdown state in the parent
-            }}
-            onCartClick={() => setCartModalOpen(true)}
-            profilePicture={user?.profilePicture}
-            username={user?.username}
-            isDropdownActive={profileDropdownOpen} // Pass the dropdown state
-          />
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={handleProfileClick}
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+            >
+              <img
+                src={user?.profilePicture || "/assets/icons/profile.svg"} // Show user's profile picture or fallback icon
+                alt="Profile"
+                className="w-8 h-8 rounded-full object-cover"
+              />
+              {user?.id && (
+                <img
+                  src="/assets/icons/arrow-down.svg" // Arrow icon only shown if user is logged in
+                  alt="Dropdown"
+                  className={`w-4 h-4 transform transition-transform duration-200 ${
+                    profileDropdownOpen ? "rotate-180" : "rotate-0"
+                  }`}
+                />
+              )}
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -61,15 +83,25 @@ export default function AppNavbar() {
 
       {/* Profile Dropdown */}
       {user?.id && profileDropdownOpen && (
-        <ProfileDropdown 
-          username={user.username} // Pass the username to ProfileDropdown
-          onOrdersClick={() => navigate("/orders")} 
-          onLogoutClick={openLogoutModal} 
+        <ProfileDropdown
+          username={user?.username}
+          onOrdersClick={() => navigate("/orders")}
+          onLogoutClick={openLogoutModal}
           onUpdateUsername={(newUsername) => {
-            // Handle username update logic here
             console.log("Updated username:", newUsername);
           }}
+          isLoggedIn={!!user?.id} // Check if the user is logged in
+          onLoginRedirect={() => setLoginModalOpen(true)} // Open login modal if not logged in
         />
+      )}
+
+      {/* Login Modal */}
+      {!user?.id && loginModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-96 z-50">
+            <Login onClose={() => setLoginModalOpen(false)} />
+          </div>
+        </div>
       )}
 
       {/* Modals */}
