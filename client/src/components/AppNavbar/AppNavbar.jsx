@@ -35,6 +35,10 @@ export default function AppNavbar() {
     }
   };
 
+  const handleCloseDropdown = () => {
+    toggleProfileDropdown(false); // Close the dropdown
+  };
+
   return (
     <>
       <nav className="bg-white shadow-sm fixed w-full top-0 left-0 z-50">
@@ -102,6 +106,7 @@ export default function AppNavbar() {
           username={user?.username}
           onOrdersClick={() => navigate("/orders")}
           onLogoutClick={openLogoutModal}
+          onClose={() => toggleProfileDropdown(false)}
           onUpdateUsername={(newUsername) => {
             console.log("Updated username:", newUsername);
           }}
