@@ -63,9 +63,9 @@ export const updatePassword = async (currentPassword, newPassword) => {
         `${API_BASE_URL}/users/upload-profile-picture`,
         formData,
         {
-          ...getAuthHeaders(),
           headers: {
-            "Content-Type": "multipart/form-data",
+            ...getAuthHeaders().headers, // Include authorization headers
+            "Content-Type": "multipart/form-data", // Ensure the correct content type
           },
         }
       );
@@ -75,4 +75,3 @@ export const updatePassword = async (currentPassword, newPassword) => {
       throw error.response?.data || error.message;
     }
   };
-  

@@ -1,13 +1,11 @@
 import { useState } from "react";
 import useNavbarLogic from "../../hooks/useNavbarLogic";
 import { useNavigate } from "react-router-dom";
-import NavIcons from "./NavIcons";
 import MobileMenu from "./MobileMenu";
 import ProfileDropdown from "./ProfileDropdown";
 import ProfileModal from "../Auth/ProfileModal";
 import LogoutModal from "../Auth/LogoutModal";
 import CartModal from "../UserCart/CartModal";
-import Login from "../Auth/Login"; // Import Login component
 
 export default function AppNavbar() {
   const navigate = useNavigate();
@@ -55,9 +53,22 @@ export default function AppNavbar() {
 
           {/* Desktop Navigation Icons */}
           <div className="flex items-center space-x-4">
+            {/* Cart Icon */}
+            <button
+              onClick={() => setCartModalOpen(true)}
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+            >
+              <img
+                src="/assets/icons/cart.svg" // Cart icon
+                alt="Cart"
+                className="w-8 h-8"
+              />
+            </button>
+
+            {/* Profile Icon */}
             <button
               onClick={handleProfileClick}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+              className="relative flex items-center space-x-2 text-gray-600 hover:text-gray-900"
             >
               <img
                 src={user?.profilePicture || "/assets/icons/profile.svg"} // Show user's profile picture or fallback icon
@@ -65,13 +76,17 @@ export default function AppNavbar() {
                 className="w-8 h-8 rounded-full object-cover"
               />
               {user?.id && (
-                <img
-                  src="/assets/icons/arrow-down.svg" // Arrow icon only shown if user is logged in
-                  alt="Dropdown"
-                  className={`w-4 h-4 transform transition-transform duration-200 ${
+                <div
+                  className={`absolute -bottom-1 -right-2 w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center transform transition-transform duration-200 ${
                     profileDropdownOpen ? "rotate-180" : "rotate-0"
                   }`}
-                />
+                >
+                  <img
+                    src="/assets/icons/arrow-down.svg" // Arrow icon only shown if user is logged in
+                    alt="Dropdown"
+                    className="w-2.5 h-2.5"
+                  />
+                </div>
               )}
             </button>
           </div>
@@ -97,11 +112,7 @@ export default function AppNavbar() {
 
       {/* Login Modal */}
       {!user?.id && loginModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-96 z-50">
-            <Login onClose={() => setLoginModalOpen(false)} />
-          </div>
-        </div>
+        <ProfileModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
       )}
 
       {/* Modals */}

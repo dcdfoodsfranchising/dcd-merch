@@ -1,63 +1,49 @@
-import React, { useState } from "react";
+import React, { useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import UserContext from "../../context/UserContext";
 
-export default function ProfileDropdown({ onOrdersClick, onLogoutClick, username, onUpdateUsername }) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [newUsername, setNewUsername] = useState(username);
+export default function ProfileDropdown({ onOrdersClick, onLogoutClick }) {
+  const { user } = useContext(UserContext); // Access user from context
+  const navigate = useNavigate();
 
-  const handleEditClick = () => {
-    setIsEditing(true);
-  };
-
-  const handleSaveClick = () => {
-    onUpdateUsername(newUsername); // Call the update username function
-    setIsEditing(false);
+  const handleProfileClick = () => {
+    navigate("/profile"); // Redirect to the profile page
   };
 
   return (
-    <div className="absolute right-4 mt-20 w-64 bg-white shadow-lg rounded-md py-4 z-50">
-      {/* Editable Username */}
-      <div className="flex items-center px-4 py-2 border-b border-gray-200">
-        {isEditing ? (
-          <input
-            type="text"
-            value={newUsername}
-            onChange={(e) => setNewUsername(e.target.value)}
-            className="flex-1 border border-gray-300 rounded px-2 py-1 text-gray-700 focus:outline-none focus:ring focus:ring-blue-300"
-          />
-        ) : (
-          <span className="flex-1 text-gray-700 font-medium truncate">{username}</span>
-        )}
-        {isEditing ? (
-          <button
-            onClick={handleSaveClick}
-            className="ml-2 text-blue-500 hover:text-blue-700 text-sm font-medium"
-          >
-            Save
-          </button>
-        ) : (
-          <button
-            onClick={handleEditClick}
-            className="ml-2 text-gray-500 hover:text-gray-700"
-          >
-            <img src="/assets/icons/edit.svg" alt="Edit" className="w-4 h-4" />
-          </button>
-        )}
+    <div className="absolute right-4 mt-20 w-64 bg-white shadow-lg rounded-md py-2 z-50">
+      {/* Profile Section */}
+      <div
+        onClick={handleProfileClick}
+        className="flex items-center px-4 py-2 pb-2 border-b border-gray-200 cursor-pointer hover:bg-gray-100 w-full"
+      >
+        <img
+          src={user?.profilePicture || "/assets/icons/profile.svg"} // Show user's profile picture or fallback icon
+          alt="Profile"
+          className="w-9 h-9 rounded-full object-cover mr-3" // 36x36 size
+        />
+        <div className="flex flex-col">
+          <span className="text-gray-700 font-medium text-sm truncate">{user?.username}</span>
+          <span className="text-gray-500 text-sm">View Profile</span>
+        </div>
       </div>
 
       {/* Orders Button */}
       <button
         onClick={onOrdersClick}
-        className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+        className="flex items-center px-4 py-1 pt-3 text-gray-700 hover:bg-gray-100 w-full"
       >
-        My Orders
+        <img src="/assets/icons/receipt.svg" className="w-7 h-7 object-cover mr-3" alt="Orders" /> {/* 36x36 size */}
+        <span className="text-gray-700 font-medium text-sm truncate">Orders</span>
       </button>
 
       {/* Logout Button */}
       <button
         onClick={onLogoutClick}
-        className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+        className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 w-full"
       >
-        Logout
+        <img src="/assets/icons/logout.svg" className="w-7 h-7 object-cover mr-3" alt="Logout" /> {/* 36x36 size */}
+        <span className="text-gray-700 font-medium text-sm truncate">Logout</span>
       </button>
     </div>
   );

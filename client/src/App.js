@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, useLocation, Outlet } from "react-router-dom";
+import "react-toastify/dist/ReactToastify.css";
 import AppNavbar from "./components/AppNavbar/AppNavbar";
 import Home from "./pages/Home";
 import Products from "./pages/Products";
@@ -14,6 +15,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import DetailsForm from "./pages/DetailsForm";
 import CheckoutPage from "./pages/Checkout";
 import ProductView from "./pages/ProductView";
+import Profile from "./pages/Profile";
 import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 
 function UserRedirector() {
@@ -52,7 +54,7 @@ const PlainLayout = () => (
 );
 
 function App() {
-  const [user, setUser] = useState({ id: null, isAdmin: null, profilePicture: null });
+  const [user, setUser] = useState({ id: null, isAdmin: null, profilePicture: null, username: null });
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState([]);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
@@ -70,15 +72,15 @@ function App() {
           setLoading(false);
           return;
         }
-  
+
         const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/users/details`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-  
+
         const data = await response.json();
-  
+
         if (data.user?._id) {
           setUser({
             id: data.user._id,
@@ -96,18 +98,44 @@ function App() {
         setLoading(false);
       }
     }
-  
+
     fetchUser();
   }, []);
 
   const unsetUser = () => {
     localStorage.clear();
-    setUser({ id: null, isAdmin: null, profilePicture: null });
+    setUser({ id: null, isAdmin: null, profilePicture: null, username: null });
+  };
+
+  const updateUserDetails = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/users/details`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.user?._id) {
+        setUser({
+          id: data.user._id,
+          isAdmin: data.user.isAdmin,
+          profilePicture: data.user.profilePicture || null,
+          username: data.user.username || "Guest",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating user details:", error);
+    }
   };
 
   return (
     <GoogleReCaptchaProvider reCaptchaKey={process.env.REACT_APP_RECAPTCHA_SITE_KEY}>
-      <UserContext.Provider value={{ user, setUser, unsetUser, cart, setCart }}>
+      <UserContext.Provider value={{ user, setUser, unsetUser, cart, setCart, updateUserDetails }}>
         <Router>
           <UserRedirector />
           <div className="flex">
@@ -123,6 +151,7 @@ function App() {
                     <Route path="/products" element={<Products />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/product/:productId" element={<ProductView />} />
+                    <Route path="/profile" element={<Profile />} />
                   </Route>
 
                   {/* Routes WITHOUT navbar */}
