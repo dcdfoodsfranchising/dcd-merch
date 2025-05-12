@@ -28,6 +28,9 @@ router.patch("/:id/set-as-admin", verify, verifyAdmin, userController.updateUser
 // Update Password
 router.patch("/update-password", verify, userController.updatePassword);
 
+//Update User Details
+router.patch("/update-details", verify, userController.updateUserDetails);
+
 // Upload Profile Picture
 router.post(
     "/upload-profile-picture",

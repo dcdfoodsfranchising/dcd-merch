@@ -406,3 +406,31 @@ module.exports.updateUsername = async (req, res) => {
         res.status(500).send({ message: "Internal Server Error", error: err.message });
     }
 };
+
+
+module.exports.updateUserDetails = async (req, res) => {
+    try {
+      const { firstName, lastName, mobileNo } = req.body;
+  
+      // Validate input
+      if (!firstName || !lastName || !mobileNo) {
+        return res.status(400).json({ message: "All fields are required." });
+      }
+  
+      // Update user details
+      const updatedUser = await User.findByIdAndUpdate(
+        req.user.id, // Assuming `req.user.id` contains the authenticated user's ID
+        { firstName, lastName, mobileNo },
+        { new: true } // Return the updated document
+      );
+  
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found." });
+      }
+  
+      res.status(200).json({ message: "User details updated successfully.", user: updatedUser });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "An error occurred while updating user details." });
+    }
+  };
