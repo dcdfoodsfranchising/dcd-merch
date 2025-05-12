@@ -29,7 +29,11 @@ export default function AppNavbar() {
 
   const handleProfileClick = () => {
     if (user?.id) {
-      toggleProfileDropdown(!profileDropdownOpen); // Toggle dropdown if user is logged in
+      if (profileDropdownOpen) {
+        toggleProfileDropdown(false); // Close the dropdown if it's open
+      } else {
+        toggleProfileDropdown(true); // Open the dropdown if it's closed
+      }
     } else {
       setLoginModalOpen(true); // Open login modal if user is not logged in
     }

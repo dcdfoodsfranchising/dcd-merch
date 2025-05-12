@@ -39,19 +39,20 @@ export const updateUsername = async (username) => {
 };
 
 // Update password
-export const updatePassword = async (currentPassword, newPassword) => {
-    try {
-      const response = await axios.patch(
-        `${API_BASE_URL}/users/update-password`,
-        { currentPassword, newPassword },
-        getAuthHeaders()
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error updating password:", error);
-      throw error.response?.data || error.message;
-    }
-  };
+export const updatePassword = async (currentPassword, newPassword, confirmPassword) => {
+  try {
+    console.log("Payload:", { currentPassword, newPassword, confirmPassword }); // Log the payload
+    const response = await axios.patch(
+      `${API_BASE_URL}/users/update-password`,
+      { currentPassword, newPassword, confirmPassword },
+      getAuthHeaders() // Correctly call the getAuthHeaders function
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating password:", error.response?.data || error.message);
+    throw error.response?.data || error.message;
+  }
+};
   
   // Upload profile picture
   export const uploadProfilePicture = async (file) => {
@@ -73,5 +74,25 @@ export const updatePassword = async (currentPassword, newPassword) => {
     } catch (error) {
       console.error("Error uploading profile picture:", error);
       throw error.response?.data || error.message;
+    }
+  };
+
+  export const updateUserDetails = async (userDetails) => {
+    try {
+      const token = localStorage.getItem("token"); // Assuming the token is stored in localStorage
+      const response = await axios.patch(
+        `${API_BASE_URL}/users/update-details`,
+        userDetails,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Include the JWT token in the Authorization header
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data; // Return the response data
+    } catch (error) {
+      console.error("Error updating user details:", error.response?.data || error.message);
+      throw error.response?.data || { message: "An error occurred while updating user details." };
     }
   };
