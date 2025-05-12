@@ -410,17 +410,17 @@ module.exports.updateUsername = async (req, res) => {
 
 module.exports.updateUserDetails = async (req, res) => {
     try {
-      const { firstName, lastName, mobileNo } = req.body;
+      const { firstName, lastName } = req.body;
   
       // Validate input
-      if (!firstName || !lastName || !mobileNo) {
-        return res.status(400).json({ message: "All fields are required." });
+      if (!firstName || !lastName) {
+        return res.status(400).json({ message: "First name and last name are required." });
       }
   
       // Update user details
       const updatedUser = await User.findByIdAndUpdate(
         req.user.id, // Assuming `req.user.id` contains the authenticated user's ID
-        { firstName, lastName, mobileNo },
+        { firstName, lastName },
         { new: true } // Return the updated document
       );
   
