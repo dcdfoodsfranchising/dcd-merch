@@ -304,33 +304,48 @@ module.exports.updateUserAsAdmin = async (req, res) => {
 // Update Password
 module.exports.updatePassword = async (req, res) => {
     try {
-        const { currentPassword, newPassword } = req.body;
+        const { currentPassword, newPassword, confirmPassword } = req.body;
 
+        // Validate input
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            return res.status(400).send({ message: "Current password, new password, and confirm password are required." });
+        }
+
+        // Check if newPassword matches confirmPassword
+        if (newPassword !== confirmPassword) {
+            return res.status(400).send({ message: "New password and confirm password do not match." });
+        }
+
+        // Find the user by ID
         const user = await User.findById(req.user.id);
 
         if (!user) {
-            return res.status(404).send({ message: "User not found" });
+            return res.status(404).send({ message: "User not found." });
         }
 
+        // Verify the current password
         const isPasswordCorrect = bcrypt.compareSync(currentPassword, user.password);
 
         if (!isPasswordCorrect) {
-            return res.status(400).send({ message: "Current password is incorrect" });
+            return res.status(400).send({ message: "Current password is incorrect." });
         }
 
+        // Validate the new password format
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
         if (!passwordRegex.test(newPassword)) {
             return res.status(400).send({
-                message: 'Password must be at least 8 characters long and include uppercase, lowercase, a number, and a special character.'
+                message: "Password must be at least 8 characters long and include uppercase, lowercase, a number, and a special character."
             });
         }
 
+        // Hash and update the new password
         user.password = bcrypt.hashSync(newPassword, 10);
         await user.save();
 
         res.status(200).send({ message: "Password updated successfully." });
     } catch (err) {
+        console.error("Error updating password:", err.message);
         res.status(500).send({ message: "Internal Server Error", error: err.message });
     }
 };
