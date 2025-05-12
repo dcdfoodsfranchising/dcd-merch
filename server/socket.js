@@ -4,7 +4,11 @@ let io;
 
 const initializeSocket = (server) => {
     io = socketIo(server, {
-        cors: { origin: "*" },
+        cors: {
+            origin: ["http://localhost:3000", "https://dcd-merch.vercel.app"], // Allowed origins
+            methods: ["GET", "POST"], // Allowed HTTP methods
+            credentials: true, // Allow cookies and credentials
+        },
     });
 
     io.on("connection", (socket) => {
@@ -26,7 +30,7 @@ const emitNewOrder = (order) => {
     }
 };
 
-// ✅ Fix: Define `emitProductUpdate`
+// ✅ Emit product update event
 const emitProductUpdate = (product) => {
     if (io) {
         console.log("📢 Product Updated:", product);

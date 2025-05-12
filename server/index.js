@@ -27,7 +27,13 @@ mongoose.connection.once("open", () => console.log("✅ Connected to MongoDB Atl
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: "*", credentials: true }));
+app.use(
+    cors({
+      origin: "http://localhost:3000", // Replace with your frontend's URL
+      credentials: true, // Allow cookies and credentials
+      methods: ["GET", "POST", "PATCH", "PUT", "DELETE"], // Allowed HTTP methods
+    })
+  );
 
 // Routes
 app.use("/users", userRoutes);
