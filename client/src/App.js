@@ -67,6 +67,7 @@ function App() {
     async function fetchUser() {
       try {
         const token = localStorage.getItem("token");
+        console.log(token)
         if (!token) {
           setUser({ id: null, isAdmin: null, profilePicture: null, username: null });
           setLoading(false);

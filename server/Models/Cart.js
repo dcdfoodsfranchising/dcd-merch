@@ -1,11 +1,13 @@
 const mongoose = require('mongoose');
 
-// Variant schema for cart items (based on Product model's variantSchema)
+// Variant schema for cart items (based on updated Product variant structure)
 const variantSchema = new mongoose.Schema({
-    name: { type: String, required: true }, // e.g., "Small", "Medium", "Large"
-    price: { type: Number, required: true }, // Price of the selected variant
+    name: { type: String, required: true },
+    size: { type: String, required: false },   // e.g., "Small"
+    color: { type: String, required: false },  // e.g., "Red"
+    price: { type: Number, required: true },   // Price of the selected variant
     quantity: { type: Number, required: true, default: 0 } // Quantity available in stock
-});
+}, { _id: false });
 
 // Cart item schema
 const cartItemSchema = new mongoose.Schema({
@@ -15,7 +17,7 @@ const cartItemSchema = new mongoose.Schema({
         required: true 
     },
     variant: { 
-        type: variantSchema, // Embed the variant schema
+        type: variantSchema, // Embed the updated variant schema
         required: true 
     },
     quantity: { 

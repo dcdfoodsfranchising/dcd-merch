@@ -21,9 +21,20 @@ module.exports.createProduct = async (req, res) => {
         }
 
         // Validate variants
-        if (!Array.isArray(variants) || variants.some(v => !v.name || !v.price || !v.quantity)) {
-            return res.status(400).json({ message: "Each variant must have a name, price, and quantity" });
-        }
+        if (
+            !Array.isArray(variants) ||
+            variants.some(
+              (v) =>
+                (!v.size && !v.color) || // must have at least one of size or color
+                typeof v.price !== 'number' ||
+                typeof v.quantity !== 'number'
+            )
+          ) {
+            return res.status(400).json({
+              message: "Each variant must have at least size or color, and valid price and quantity."
+            });
+          }
+          
 
         // Upload images to Cloudinary if provided
         if (req.files && req.files.length > 0) {
@@ -107,36 +118,82 @@ module.exports.singleProduct = async (req, res) => {
         res.status(500).json({ error: error.message }); a
     }
 } ;
-  
-// Update product info
+
+
 module.exports.updateProductInfo = async (req, res) => {
     try {
-        // Extract the product ID from the request parameters
-        const { productId } = req.params;
-
-        // Check if the product exists
-        const product = await Product.findById(productId);
-        if (!product) {
-            return res.status(404).json({ error: 'Product not found' });
+      const { productId } = req.params;
+  
+      // Find the product
+      const product = await Product.findById(productId);
+      if (!product) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+  
+      let { variants } = req.body;
+  
+      // Log the request body to debug
+      console.log('Received body:', req.body);
+  
+      // Parse variants if sent as string (e.g. from Postman/form-data)
+      if (typeof variants === 'string') {
+        variants = JSON.parse(variants);
+      }
+  
+      // Handle variant validation (if being updated)
+      if (Array.isArray(variants)) {
+        const isInvalid = variants.some(
+          (v) =>
+            (!v.size && !v.color) ||
+            typeof v.price !== 'number' ||
+            typeof v.quantity !== 'number'
+        );
+  
+        if (isInvalid) {
+          return res.status(400).json({
+            error: 'Each variant must have at least size or color, and valid price and quantity.'
+          });
         }
-
-        // Update only the fields provided in the request body
-        Object.keys(req.body).forEach((key) => {
-            product[key] = req.body[key];
-        });
-
-        // Save the updated product
-        await product.save();
-
-        res.status(200).json({
-            message: "Product updated successfully",
-            updatedProduct: product
-        });
+  
+        product.variants = variants; // replace existing variants
+        product.markModified('variants');
+      }
+  
+      // Handle image uploads if new images are provided
+      if (req.files && req.files.length > 0) {
+        const imageUrls = await Promise.all(
+          req.files.map(async (file) => {
+            const result = await cloudinary.uploader.upload(file.path);
+            return result.secure_url;
+          })
+        );
+        product.images = imageUrls;
+        product.markModified('images');
+      }
+  
+      // Update other fields dynamically (excluding variants and images)
+      const excludedKeys = ['variants', 'images'];
+      Object.keys(req.body).forEach((key) => {
+        if (!excludedKeys.includes(key)) {
+          product[key] = req.body[key];
+        }
+      });
+  
+      // Save the updated product and log the result
+      const updatedProduct = await product.save();
+      console.log('Product saved:', updatedProduct);
+  
+      res.status(200).json({
+        message: 'Product updated successfully',
+        updatedProduct
+      });
     } catch (error) {
-        console.error("Error updating product:", error);
-        res.status(400).json({ error: error.message });
+      console.error('Error updating product:', error);
+      res.status(400).json({ error: error.message });
     }
-};
+  };
+  
+
 
 // Archive a product (set isActive to false)
 module.exports.archiveProduct = async (req, res) => {
@@ -209,24 +266,41 @@ module.exports.searchProductsByPrice = async (req, res) => {
 // Add Stock to a Specific Variant
 module.exports.addStock = async (req, res) => {
     try {
-        const { variantName, quantity } = req.body;
-        const product = await Product.findById(req.params.productId);
-
-        if (!product) return res.status(404).json({ error: "Product not found" });
-
-        const variant = product.variants.find(v => v.name === variantName);
-        if (!variant) {
-            return res.status(404).json({ error: "Variant not found" });
-        }
-
-        variant.quantity += parseInt(quantity, 10);
-        await product.save();
-
-        res.status(200).json({ message: "Stock updated", product });
+      const { size, color, quantity } = req.body;
+      const product = await Product.findById(req.params.productId);
+  
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+  
+      // Find the matching variant using size and/or color
+      const variant = product.variants.find(v =>
+        (size ? v.size === size : true) &&
+        (color ? v.color === color : true)
+      );
+  
+      if (!variant) {
+        return res.status(404).json({ error: "Variant not found" });
+      }
+  
+      variant.quantity += parseInt(quantity, 10);
+  
+      // Mark variants modified for Mongoose to recognize changes
+      product.markModified("variants");
+      await product.save();
+  
+      res.status(200).json({
+        message: "Stock updated successfully",
+        updatedVariant: variant,
+        product
+      });
+  
     } catch (error) {
-        res.status(500).json({ error: error.message });
+      console.error("Error in addStock:", error);
+      res.status(500).json({ error: error.message });
     }
-};
+  };
+  
 
 
 
