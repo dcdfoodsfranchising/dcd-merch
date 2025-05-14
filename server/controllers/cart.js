@@ -114,14 +114,15 @@ module.exports.addToCart = async (req, res) => {
             cart.cartItems.push({
                 productId,
                 variant: {
-                  size: variant.size,
-                  color: variant.color,
-                  price: variant.price,
-                  quantity: variant.quantity
+                name: `${variant.size || ''} ${variant.color || ''}`.trim(), // <-- Add this line
+                size: variant.size,
+                color: variant.color,
+                price: variant.price,
+                quantity: variant.quantity
                 },
                 quantity,
                 subtotal
-              });
+            });
               
         }
 
