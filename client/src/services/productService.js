@@ -228,3 +228,27 @@ export const deleteProductImage = async (productId, imageUrl) => {
     throw error;
   }
 };
+
+
+export const updateProductQuantity = async (productId, { size, color, quantityChange }) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("No authentication token found.");
+
+    const response = await axios.patch(
+      `${API_BASE_URL}/products/${productId}/update-quantity`,
+      { size, color, quantityChange },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error updating product quantity:", error);
+    throw error;
+  }
+};

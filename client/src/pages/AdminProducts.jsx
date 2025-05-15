@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import io from "socket.io-client";
 import { FiEdit } from "react-icons/fi";
-import EditProduct from "../components/Product/EditProduct";
-import CreateProduct from "../components/Product/CreateProduct";
+import EditProduct from "../components/AdminProduct/EditProduct";
+import CreateProduct from "../components/AdminProduct/CreateProduct";
 import { activateProduct, archiveProduct, getAllProducts } from "../services/productService";
 
 const socket = io(process.env.REACT_APP_API_BASE_URL);

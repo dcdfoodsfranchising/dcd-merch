@@ -1,14 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { addToCart } from '../services/cartService'; // Adjust path if needed
-import Swal from 'sweetalert2';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { addToCart } from '../services/cartService';
+import { toast } from 'react-toastify';
+import Lottie from 'lottie-react';
+import successAnimation from '../assets/icons/success.json';
+import QuantitySelector from '../components/Product/QuantitySelector';
+import { updateProductQuantity } from '../services/productService';
+
+// Lazy load subcomponents
+const ProductImages = lazy(() => import('../components/Product/ProductImages'));
+const ProductVariants = lazy(() => import('../components/Product/ProductVariants'));
+const ProductReviews = lazy(() => import('../components/Product/ProductReviews'));
 
 const ProductView = () => {
   const { productId } = useParams();
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
   const [priceRange, setPriceRange] = useState(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchProduct() {
@@ -17,7 +31,33 @@ const ProductView = () => {
         const data = await response.json();
         setProduct(data.product);
         setSelectedImage(data.product?.images?.[0] || null);
-        setSelectedVariant(data.product?.variants?.[0] || null);
+
+        // Variant auto-selection logic
+        if (data.product?.variants?.length === 1) {
+          const v = data.product.variants[0];
+          setSelectedVariant(v);
+          setSelectedColor(v.color || null);
+          setSelectedSize(v.size || null);
+        } else if (data.product?.variants?.length > 1) {
+          const sizes = [...new Set(data.product.variants.map((v) => v.size).filter(Boolean))];
+          const colors = [...new Set(data.product.variants.map((v) => v.color).filter(Boolean))];
+          if (sizes.length === 1 && colors.length === 1) {
+            setSelectedSize(sizes[0]);
+            setSelectedColor(colors[0]);
+            const variant = data.product.variants.find(
+              (v) => v.size === sizes[0] && v.color === colors[0]
+            );
+            setSelectedVariant(variant || null);
+          } else {
+            setSelectedVariant(null);
+            setSelectedColor(null);
+            setSelectedSize(null);
+          }
+        } else {
+          setSelectedVariant(null);
+          setSelectedColor(null);
+          setSelectedSize(null);
+        }
 
         if (data.product?.variants?.length > 0) {
           const prices = data.product.variants.map((variant) => variant.price);
@@ -33,6 +73,24 @@ const ProductView = () => {
     fetchProduct();
   }, [productId]);
 
+  // Update selectedVariant when color or size changes
+  useEffect(() => {
+    if (!product?.variants) return;
+    if (product.variants.length === 1) return;
+    const sizes = [...new Set(product.variants.map((v) => v.size).filter(Boolean))];
+    const colors = [...new Set(product.variants.map((v) => v.color).filter(Boolean))];
+    if (sizes.length === 1 && colors.length === 1) return;
+
+    if (selectedColor && selectedSize) {
+      const variant = product.variants.find(
+        (v) => v.color === selectedColor && v.size === selectedSize
+      );
+      setSelectedVariant(variant || null);
+    } else {
+      setSelectedVariant(null);
+    }
+  }, [selectedColor, selectedSize, product]);
+
   const calculateAverageRating = () => {
     if (!product?.reviews || product.reviews.length === 0) return 0;
     const totalRating = product.reviews.reduce((sum, review) => sum + review.rating, 0);
@@ -40,22 +98,49 @@ const ProductView = () => {
   };
 
   const handleAddToCart = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.info('Please login or register first to add items to your cart.');
+      return;
+    }
+    if (product.variants && product.variants.length > 0 && !selectedVariant) {
+      toast.info('Please select a valid variant (size/color) before adding to cart.');
+      return;
+    }
     try {
-      const quantity = 1;
-      await addToCart(product._id, quantity);
-      Swal.fire({
-        icon: 'success',
-        title: 'Added to cart!',
-        text: `${product.name} has been added to your cart.`,
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      const productId = product._id;
+      const size = selectedVariant ? selectedVariant.size : null;
+      const color = selectedVariant ? selectedVariant.color : null;
+      const quantityToAdd = quantity;
+      await addToCart(productId, size, color, quantityToAdd);
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        navigate('/');
+      }, 1800);
     } catch (error) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: error.response?.data?.message || 'Failed to add to cart.',
+      if (
+        error.response &&
+        (error.response.data?.message?.toLowerCase().includes('invalid token') ||
+          error.response.data?.message?.toLowerCase().includes('jwt'))
+      ) {
+        toast.info('Session expired. Please login again.');
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to add to cart.');
+      }
+    }
+  };
+
+  const handleQuantityChange = async (change) => {
+    try {
+      await updateProductQuantity(product._id, {
+        size: selectedVariant?.size,
+        color: selectedVariant?.color,
+        quantityChange: change,
       });
+      // Optionally, you can refetch product data here to update availableQuantity
+    } catch (error) {
+      toast.error("Failed to update product quantity.");
     }
   };
 
@@ -64,152 +149,131 @@ const ProductView = () => {
   }
 
   const averageRating = calculateAverageRating();
+  const sizeOptions = product.variants ? [...new Set(product.variants.map((v) => v.size).filter(Boolean))] : [];
+  const colorOptions = product.variants ? [...new Set(product.variants.map((v) => v.color).filter(Boolean))] : [];
+  const onlyOneSizeAndColor = sizeOptions.length === 1 && colorOptions.length === 1;
+  const availableQuantity = selectedVariant ? selectedVariant.quantity : product.quantity;
+  const requiresVariantSelection =
+    product.variants &&
+    product.variants.length > 1 &&
+    (
+      (sizeOptions.length > 0 && !selectedSize) ||
+      (colorOptions.length > 0 && !selectedColor)
+    );
 
   return (
-    <div className="p-4">
-      <div className="lg:max-w-6xl max-w-xl mx-auto">
-        <div className="grid items-start grid-cols-1 lg:grid-cols-2 gap-8 max-lg:gap-12 max-sm:gap-8">
-          {/* Image Section */}
-          <div className="w-full lg:sticky top-0">
-            <div className="flex flex-col gap-4">
-              <div className="flex-1">
-                <img
-                  src={selectedImage}
-                  alt={product.name}
-                  className="w-full aspect-[548/712] object-cover rounded shadow"
+    <>
+      {showSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-10">
+          <Lottie
+            animationData={successAnimation}
+            loop={false}
+            style={{ width: 240, height: 240, background: 'transparent' }}
+          />
+        </div>
+      )}
+      <div className="p-4">
+        <div className="lg:max-w-6xl max-w-xl mx-auto">
+          <div className="grid items-start grid-cols-1 lg:grid-cols-2 gap-8 max-lg:gap-12 max-sm:gap-8">
+            {/* Image Section */}
+            <div className="w-full lg:sticky top-0">
+              <Suspense fallback={<div>Loading images...</div>}>
+                <ProductImages
+                  images={product.images}
+                  selectedImage={selectedImage}
+                  setSelectedImage={setSelectedImage}
+                  productName={product.name}
                 />
-              </div>
-
-              <div className="flex gap-3 overflow-x-auto">
-                {product.images.map((img, index) => (
-                  <img
-                    key={index}
-                    src={img}
-                    alt={`Thumbnail ${index + 1}`}
-                    onClick={() => setSelectedImage(img)}
-                    className={`w-24 h-24 object-cover cursor-pointer border-2 rounded ${
-                      selectedImage === img ? 'border-black' : 'border-transparent'
-                    }`}
-                  />
-                ))}
-              </div>
+              </Suspense>
             </div>
-          </div>
-
-          {/* Product Info */}
-          <div className="w-full">
-            <h3 className="text-lg sm:text-xl font-semibold text-slate-900">{product.name}</h3>
-            <div className="flex items-center gap-4 mt-2">
-              <div className="flex items-center">
-                {Array.from({ length: 5 }, (_, index) => (
-                  <span
-                    key={index}
-                    className={`text-yellow-500 ${
-                      index < Math.round(averageRating) ? 'text-yellow-500' : 'text-gray-300'
-                    }`}
-                  >
-                    ★
-                  </span>
-                ))}
-              </div>
-              <p className="text-sm text-slate-500">{product.reviews?.length || 0} reviews</p>
-              <p className="text-sm text-slate-500">{product.sold || 0} sold</p>
-            </div>
-
-            <div className="flex items-center flex-wrap gap-4 mt-6">
-              <h4 className="text-slate-900 text-2xl sm:text-3xl font-semibold">
-                {selectedVariant
-                  ? `₱${selectedVariant.price}`
-                  : priceRange
-                  ? `₱${priceRange.min} - ₱${priceRange.max}`
-                  : `₱${product.price}`}
-              </h4>
-              <p className="text-slate-500 text-lg">
-                <span className="text-sm ml-1.5">Tax included</span>
-              </p>
-            </div>
-
-            <p className="text-slate-500 text-sm mt-2">Available Quantity: {product.quantity}</p>
-
-            <div className="mt-6 flex flex-wrap gap-4">
-              <button
-                type="button"
-                className="px-4 py-3 w-[45%] border border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-900 text-sm font-medium"
-              >
-                Add to wishlist
-              </button>
-              <button
-                type="button"
-                onClick={handleAddToCart}
-                className={`px-4 py-3 w-[45%] text-sm font-medium ${
-                  product.quantity > 0
-                    ? 'border border-red-600 bg-red-600 hover:bg-red-700 text-white'
-                    : 'border border-slate-400 bg-slate-300 text-slate-500 cursor-not-allowed'
-                }`}
-                disabled={product.quantity === 0}
-              >
-                {product.quantity > 0 ? 'Add to cart' : 'Out of Stock'}
-              </button>
-            </div>
-
-            <hr className="my-6 border-slate-300" />
-
-            <div>
-              <h3 className="text-lg sm:text-xl font-semibold text-slate-900">Variants</h3>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {product.variants && product.variants.length > 0 ? (
-                  product.variants.map((variant, index) => (
-                    <button
+            {/* Product Info */}
+            <div className="w-full">
+              <h3 className="text-lg sm:text-xl font-semibold text-slate-900">{product.name}</h3>
+              <div className="flex items-center gap-4 mt-2">
+                <div className="flex items-center">
+                  {Array.from({ length: 5 }, (_, index) => (
+                    <span
                       key={index}
-                      className={`px-4 py-2 text-sm font-medium border rounded ${
-                        selectedVariant?.name === variant.name
-                          ? 'bg-red-600 text-white border-red-600'
-                          : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                      className={`text-yellow-500 ${
+                        index < Math.round(averageRating) ? 'text-yellow-500' : 'text-gray-300'
                       }`}
-                      onClick={() => setSelectedVariant(variant)}
                     >
-                      {variant.name}
-                    </button>
-                  ))
-                ) : (
-                  <p className="text-sm text-slate-500">No variants available for this product.</p>
-                )}
+                      ★
+                    </span>
+                  ))}
+                </div>
+                <p className="text-sm text-slate-500">{product.reviews?.length || 0} reviews</p>
+                <p className="text-sm text-slate-500">{product.sold || 0} sold</p>
               </div>
-            </div>
-
-            <hr className="my-6 border-slate-300" />
-
-            <div>
-              <h3 className="text-lg sm:text-xl font-semibold text-slate-900">Product Information</h3>
-              <div className="mt-4">
-                <p className="text-sm text-slate-500 leading-relaxed">
-                  {product.description || 'No additional product information available.'}
+              <div className="flex items-center flex-wrap gap-4 mt-6">
+                <h4 className="text-slate-900 text-2xl sm:text-3xl font-semibold">
+                  {selectedVariant
+                    ? `₱${selectedVariant.price}`
+                    : priceRange
+                    ? `₱${priceRange.min}`
+                    : `₱${product.price}`}
+                </h4>
+                <p className="text-slate-500 text-lg">
+                  <span className="text-sm ml-1.5">Tax included</span>
                 </p>
               </div>
-            </div>
-
-            <hr className="my-6 border-slate-300" />
-
-            <div>
-              <h3 className="text-lg sm:text-xl font-semibold text-slate-900">Product Reviews</h3>
-              <div className="mt-4 space-y-4">
-                {product.reviews && product.reviews.length > 0 ? (
-                  product.reviews.map((review, index) => (
-                    <div key={index} className="border rounded p-4 shadow-sm">
-                      <p className="text-sm text-slate-900 font-medium">{review.user}</p>
-                      <p className="text-sm text-slate-500 mt-1">{review.comment}</p>
-                      <p className="text-sm text-yellow-500 mt-1">Rating: {review.rating} / 5</p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-slate-500">No reviews available for this product.</p>
-                )}
+              <p className="text-slate-500 text-sm mt-2">Available Quantity: {product.quantity}</p>
+              <Suspense fallback={<div>Loading variants...</div>}>
+                <ProductVariants
+                  product={product}
+                  sizeOptions={sizeOptions}
+                  colorOptions={colorOptions}
+                  onlyOneSizeAndColor={onlyOneSizeAndColor}
+                  selectedSize={selectedSize}
+                  setSelectedSize={setSelectedSize}
+                  selectedColor={selectedColor}
+                  setSelectedColor={setSelectedColor}
+                />
+              </Suspense>
+              <QuantitySelector
+                quantity={quantity}
+                setQuantity={setQuantity}
+                max={availableQuantity}
+                onQuantityChange={handleQuantityChange}
+              />
+              <div className="mt-6 flex flex-wrap gap-4">
+                <button
+                  type="button"
+                  className="px-4 py-3 w-[45%] border border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-900 text-sm font-medium"
+                >
+                  Add to wishlist
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  className={`px-4 py-3 w-[45%] text-sm font-medium ${
+                    availableQuantity > 0 && !requiresVariantSelection
+                      ? 'border border-red-600 bg-red-600 hover:bg-red-700 text-white'
+                      : 'border border-slate-400 bg-slate-300 text-slate-500 cursor-not-allowed'
+                  }`}
+                  disabled={availableQuantity === 0 || requiresVariantSelection}
+                >
+                  Add to cart
+                </button>
               </div>
+              <hr className="my-6 border-slate-300" />
+              <div>
+                <h3 className="text-lg sm:text-xl font-semibold text-slate-900">Product Information</h3>
+                <div className="mt-4">
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    {product.description || 'No additional product information available.'}
+                  </p>
+                </div>
+              </div>
+              <hr className="my-6 border-slate-300" />
+              <Suspense fallback={<div>Loading reviews...</div>}>
+                <ProductReviews reviews={product.reviews} />
+              </Suspense>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
