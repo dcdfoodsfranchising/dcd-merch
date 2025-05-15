@@ -62,6 +62,8 @@ router.post(
     productController.uploadProductImages
 );
 
+router.patch('/products/:productId/update-quantity', verify, productController.updateProductQuantity);
+
 // 📌 Delete a Product Image
 router.delete('/:productId/delete-image', verify, verifyAdmin, productController.deleteProductImage);
 

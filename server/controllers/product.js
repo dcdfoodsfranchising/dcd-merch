@@ -420,3 +420,51 @@ module.exports.deleteProductImage = async (req, res) => {
     }
 };
 
+
+// Update (add or subtract) product or variant quantity
+module.exports.updateProductQuantity = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { size, color, quantityChange } = req.body; // quantityChange: positive or negative integer
+
+    if (typeof quantityChange !== "number" || quantityChange === 0) {
+      return res.status(400).json({ error: "quantityChange must be a non-zero number" });
+    }
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    // If product has variants, update the correct variant
+    if (Array.isArray(product.variants) && product.variants.length > 0) {
+      const variant = product.variants.find(
+        (v) =>
+          (size ? v.size === size : true) &&
+          (color ? v.color === color : true)
+      );
+      if (!variant) {
+        return res.status(404).json({ error: "Variant not found" });
+      }
+      const newQty = variant.quantity + quantityChange;
+      if (newQty < 1) {
+        return res.status(400).json({ error: "Quantity cannot be less than 1" });
+      }
+      variant.quantity = newQty;
+      product.markModified("variants");
+    } else {
+      // No variants, update product quantity directly
+      const newQty = product.quantity + quantityChange;
+      if (newQty < 1) {
+        return res.status(400).json({ error: "Quantity cannot be less than 1" });
+      }
+      product.quantity = newQty;
+    }
+
+    await product.save();
+    res.status(200).json({ message: "Product quantity updated", product });
+  } catch (error) {
+    console.error("Error updating product quantity:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
