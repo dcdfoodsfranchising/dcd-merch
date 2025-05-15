@@ -13,7 +13,7 @@ router.post('/add-to-cart', verify, verifyUser, cartController.addToCart);
 router.patch('/update-cart-quantity', verify, verifyUser, cartController.updateCartQuantity);
 
 // Remove product by id from cart
-router.patch('/:productId/remove-from-cart', verify, verifyUser, cartController.removeCartItem);
+router.patch('/:cartItemId/remove-from-cart', verify, verifyUser, cartController.removeCartItem);
 
 // Clear all products in cart
 router.put('/clear-cart', verify, verifyUser, cartController.clearCart);
