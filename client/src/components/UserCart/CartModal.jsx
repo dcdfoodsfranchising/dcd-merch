@@ -20,6 +20,7 @@ export default function CartModal({ isOpen, onClose }) {
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [itemToRemove, setItemToRemove] = useState(null);
+  const [showModal, setShowModal] = useState(isOpen);
 
   const navigate = useNavigate();
 
@@ -50,6 +51,16 @@ export default function CartModal({ isOpen, onClose }) {
   useEffect(() => {
     fetchCartItems();
   }, [fetchCartItems]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setShowModal(true);
+    } else {
+      // Wait for animation before unmounting
+      const timer = setTimeout(() => setShowModal(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
 
   const { updateQuantity, loadingItemId } = useUpdateQuantity(
     cartItems,
@@ -100,13 +111,20 @@ export default function CartModal({ isOpen, onClose }) {
     navigate('/delivery');
   };
 
-  if (!isOpen) return null;
+  if (!showModal) return null;
 
   return (
     <>
+      {/* Backdrop */}
       <div
-        className="fixed top-0 right-0 w-96 h-full bg-white shadow-lg z-50 transform transition-transform duration-300 ease-in-out"
-        style={{ transform: isOpen ? "translateX(0)" : "translateX(100%)" }}
+        className={`fixed inset-0 bg-black bg-opacity-10 z-40 transition-opacity duration-200 ${isOpen ? "opacity-100" : "opacity-0"}`}
+        onClick={onClose}
+      />
+      {/* Modal */}
+      <div
+        className={`fixed top-0 right-0 w-96 h-full bg-white shadow-lg z-50 transform transition-transform duration-300 ease-in-out
+          ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+        onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b">

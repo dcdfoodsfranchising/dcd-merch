@@ -1,22 +1,24 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense, lazy } from "react";
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, useLocation, Outlet } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
 import AppNavbar from "./components/AppNavbar/AppNavbar";
-import Home from "./pages/Home";
-import Products from "./pages/Products";
 import { UserProvider } from "./context/UserContext";
 import UserContext from "./context/UserContext";
-import Register from "./components/Auth/Register";
 import AdminSidebar from "./components/AppNavbar/AdminSidebar";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
-import AdminProducts from "./pages/AdminProducts";
-import AdminOrders from "./pages/AdminOrders";
-import AdminDashboard from "./pages/AdminDashboard";
-import DetailsForm from "./pages/DetailsForm";
-import CheckoutPage from "./pages/Checkout";
-import ProductView from "./pages/ProductView";
-import Profile from "./pages/Profile";
 import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
+
+// Lazy load route components
+const Home = lazy(() => import("./pages/Home"));
+const Products = lazy(() => import("./pages/Products"));
+const Register = lazy(() => import("./components/Auth/Register"));
+const AdminProducts = lazy(() => import("./pages/AdminProducts"));
+const AdminOrders = lazy(() => import("./pages/AdminOrders"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const DetailsForm = lazy(() => import("./pages/DetailsForm"));
+const CheckoutPage = lazy(() => import("./pages/Checkout"));
+const ProductView = lazy(() => import("./pages/ProductView"));
+const Profile = lazy(() => import("./pages/Profile"));
 
 function UserRedirector() {
   const navigate = useNavigate();
@@ -145,27 +147,29 @@ function App() {
               {loading ? (
                 <div className="text-center text-lg">Loading...</div>
               ) : (
-                <Routes>
-                  {/* Routes WITH navbar */}
-                  <Route element={<MainLayout />}>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/products" element={<Products />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/product/:productId" element={<ProductView />} />
-                    <Route path="/profile" element={<Profile />} />
-                  </Route>
+                <Suspense fallback={<div className="text-center text-lg">Loading page...</div>}>
+                  <Routes>
+                    {/* Routes WITH navbar */}
+                    <Route element={<MainLayout />}>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/products" element={<Products />} />
+                      <Route path="/register" element={<Register />} />
+                      <Route path="/product/:productId" element={<ProductView />} />
+                      <Route path="/profile" element={<Profile />} />
+                    </Route>
 
-                  {/* Routes WITHOUT navbar */}
-                  <Route element={<PlainLayout />}>
-                    <Route path="/checkout" element={<CheckoutPage />} />
-                    <Route path="/delivery" element={user?.id ? <DetailsForm /> : <Navigate to="/" />} />
-                  </Route>
+                    {/* Routes WITHOUT navbar */}
+                    <Route element={<PlainLayout />}>
+                      <Route path="/checkout" element={<CheckoutPage />} />
+                      <Route path="/delivery" element={user?.id ? <DetailsForm /> : <Navigate to="/" />} />
+                    </Route>
 
-                  {/* Admin Routes */}
-                  <Route path="/admin/products" element={<ProtectedRoute component={AdminProducts} />} />
-                  <Route path="/admin/orders" element={<ProtectedRoute component={AdminOrders} />} />
-                  <Route path="/dashboard" element={<ProtectedRoute component={AdminDashboard} />} />
-                </Routes>
+                    {/* Admin Routes */}
+                    <Route path="/admin/products" element={<ProtectedRoute component={AdminProducts} />} />
+                    <Route path="/admin/orders" element={<ProtectedRoute component={AdminOrders} />} />
+                    <Route path="/dashboard" element={<ProtectedRoute component={AdminDashboard} />} />
+                  </Routes>
+                </Suspense>
               )}
             </main>
           </div>
