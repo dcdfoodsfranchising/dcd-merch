@@ -211,15 +211,25 @@ module.exports.removeCartItem = async (req, res) => {
     try {
         const userId = req.user.id;
         const productId = req.params.productId;
+        const { size, color } = req.body; // Accept from body (or req.query if you prefer)
+
+        if (!size || !color) {
+            return res.status(400).json({ message: 'Size and color are required to remove a specific variant.' });
+        }
 
         const cart = await Cart.findOne({ userId });
         if (!cart) {
             return res.status(404).json({ message: 'Cart not found' });
         }
 
-        // Remove all items with the matching productId
+        // Remove only the item with matching productId, size, and color
         const originalLength = cart.cartItems.length;
-        cart.cartItems = cart.cartItems.filter(item => item.productId.toString() !== productId);
+        cart.cartItems = cart.cartItems.filter(
+            item =>
+                !(item.productId.toString() === productId &&
+                  item.variant.size === size &&
+                  item.variant.color === color)
+        );
 
         if (cart.cartItems.length === originalLength) {
             return res.status(404).json({ message: 'Item not found in cart' });
@@ -231,7 +241,7 @@ module.exports.removeCartItem = async (req, res) => {
         await cart.save();
 
         res.status(200).json({
-            message: 'Item(s) removed from cart successfully',
+            message: 'Item removed from cart successfully',
             cart
         });
     } catch (error) {
