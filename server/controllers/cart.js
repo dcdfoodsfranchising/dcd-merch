@@ -210,25 +210,20 @@ module.exports.updateCartQuantity = async (req, res) => {
 module.exports.removeCartItem = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { productId, size, color } = req.body;
+        const productId = req.params.productId;
 
         const cart = await Cart.findOne({ userId });
         if (!cart) {
             return res.status(404).json({ message: 'Cart not found' });
         }
 
-        const itemIndex = cart.cartItems.findIndex(item =>
-            item.productId.toString() === productId &&
-            item.variant.size === size &&
-            item.variant.color === color
-        );
+        // Remove all items with the matching productId
+        const originalLength = cart.cartItems.length;
+        cart.cartItems = cart.cartItems.filter(item => item.productId.toString() !== productId);
 
-        if (itemIndex === -1) {
+        if (cart.cartItems.length === originalLength) {
             return res.status(404).json({ message: 'Item not found in cart' });
         }
-
-        // Remove the item
-        cart.cartItems.splice(itemIndex, 1);
 
         // Update total price
         cart.totalPrice = cart.cartItems.reduce((total, item) => total + item.subtotal, 0);
@@ -236,7 +231,7 @@ module.exports.removeCartItem = async (req, res) => {
         await cart.save();
 
         res.status(200).json({
-            message: 'Item removed from cart successfully',
+            message: 'Item(s) removed from cart successfully',
             cart
         });
     } catch (error) {
