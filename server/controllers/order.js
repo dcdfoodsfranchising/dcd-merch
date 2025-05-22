@@ -112,7 +112,7 @@ module.exports.getOrders = async (req, res) => {
         // Fetch orders for the logged-in user and populate product details
         const orders = await Order.find({ userId: req.user.id }).populate({
             path: 'productsOrdered.productId',
-            select: 'name description price',
+            select: 'name description price images',
             model: 'Product'
         });
 
@@ -134,6 +134,7 @@ module.exports.getOrders = async (req, res) => {
                     name: item.productId.name,
                     description: item.productId.description,
                     price: item.productId.price,
+                    iamges: item.productId.images,
                     quantity: item.quantity,
                     subtotal: item.subtotal
                 }))
