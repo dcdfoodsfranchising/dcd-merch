@@ -1,13 +1,12 @@
-import React, { useEffect, useState, Suspense, lazy, useCallback } from 'react';
-import { getOwnDeliveryDetails, saveDeliveryDetails, deleteDeliveryDetails } from '../services/deliveryDetailsService';
-import { getCartItems } from '../services/cartService'; // adjust path as needed
+import React, { useEffect, useState, useCallback } from 'react';
+import { getOwnDeliveryDetails, saveDeliveryDetails } from '../services/deliveryDetailsService';
+import { getCartItems } from '../services/cartService';
 import Swal from 'sweetalert2';
-
-const SavedAddresses = lazy(() => import('../components/Delivery/SavedAddresses'));
-const DeliveryForm = lazy(() => import('../components/Delivery/DeliveryForm'));
-const OrderSummary = lazy(() => import('../components/Delivery/OrderSummary'));
-
-const MAX_ADDRESSES = 5;
+import DeliveryForm from '../components/Delivery/DeliveryForm';
+import OrderSummary from '../components/Delivery/OrderSummary';
+import { useNavigate } from 'react-router-dom';
+import NavbarLogo from '../components/NavbarLogo';
+import ProgressBar from '../components/ProgressBar';
 
 const initialForm = {
   firstName: '',
@@ -22,101 +21,25 @@ const initialForm = {
 };
 
 const DeliveryDetails = () => {
-  const [deliveryDetails, setDeliveryDetails] = useState([]);
   const [formData, setFormData] = useState(initialForm);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [currentAddressId, setCurrentAddressId] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [cartTotal, setCartTotal] = useState('₱0.00');
+  const navigate = useNavigate(); // <-- Add this
 
+  // Auto-fill form with saved address if available
   useEffect(() => {
-    fetchDetails();
-    // eslint-disable-next-line
-  }, []);
-
-  const fetchDetails = useCallback(async () => {
-    try {
-      const response = await getOwnDeliveryDetails();
-      // response is a single object, not an array
-      setDeliveryDetails(response ? [response] : []);
-      if (response && response._id) {
-        setSelectedAddressId(response._id);
-      }
-    } catch (error) {
-      console.error(error.message);
-    }
-  }, []);
-
-  const handleChange = useCallback((e) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  }, []);
-
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    try {
-      await saveDeliveryDetails(isEditMode ? { ...formData, _id: currentAddressId } : formData);
-      Swal.fire('Success!', `Address ${isEditMode ? 'updated' : 'saved'} successfully!`, 'success');
-      setIsModalOpen(false);
-      setIsEditMode(false);
-      setCurrentAddressId(null);
-      setFormData(initialForm);
-      fetchDetails();
-    } catch (error) {
-      Swal.fire('Error', error.message || 'Something went wrong', 'error');
-    }
-  }, [isEditMode, formData, currentAddressId, fetchDetails]);
-
-  const handleEdit = useCallback((address) => {
-    setIsEditMode(true);
-    setCurrentAddressId(address._id);
-    setFormData(address);
-    setIsModalOpen(true);
-  }, []);
-
-  const handleDelete = useCallback(async (addressId) => {
-    const confirm = await Swal.fire({
-      title: 'Delete Address?',
-      text: 'Are you sure you want to delete this address?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Yes, delete it!',
-    });
-    if (confirm.isConfirmed) {
+    const fetchDetails = async () => {
       try {
-        await deleteDeliveryDetails(addressId);
-        Swal.fire('Deleted!', 'Address has been deleted.', 'success');
-        fetchDetails();
+        const response = await getOwnDeliveryDetails();
+        if (response) setFormData(response);
       } catch (error) {
-        Swal.fire('Error', error.message || 'Something went wrong', 'error');
+        // No saved address, keep form empty
       }
-    }
-  }, [fetchDetails]);
+    };
+    fetchDetails();
+  }, []);
 
-  const handleRadioChange = useCallback((addressId) => {
-    setSelectedAddressId(addressId);
-    const selected = deliveryDetails.find(addr => addr._id === addressId);
-    if (selected) {
-      setFormData(selected);
-      setIsEditMode(false);
-      setCurrentAddressId(null);
-    }
-  }, [deliveryDetails]);
-
-  useEffect(() => {
-    if (
-      deliveryDetails.length === 1 &&
-      Object.values(formData).every(val => val === '' || val == null)
-    ) {
-      setSelectedAddressId(deliveryDetails[0]._id);
-      setFormData(deliveryDetails[0]);
-    }
-  }, [deliveryDetails]); // eslint-disable-line
-
+  // Fetch cart items and total
   useEffect(() => {
     const fetchCart = async () => {
       try {
@@ -140,37 +63,54 @@ const DeliveryDetails = () => {
     fetchCart();
   }, []);
 
+  const handleChange = useCallback((e) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  }, []);
+
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    try {
+      await saveDeliveryDetails(formData);
+      Swal.fire('Success!', 'Delivery details saved successfully!', 'success');
+      // Proceed to payment or next step here
+    } catch (error) {
+      Swal.fire('Error', error.message || 'Something went wrong', 'error');
+    }
+  }, [formData]);
+
+  // Handler for Continue Shopping button
+  const handleContinueShopping = () => {
+    navigate('/');
+  };
+
   return (
-    <div className="bg-white sm:px-8 px-4 py-6">
+    <div className="bg-white sm:px-8 px-4 py-6 min-h-[100vh] overflow-y-auto">
+      {/* Logo Navbar */}
+      <NavbarLogo />
       <div className="max-w-screen-xl max-md:max-w-xl mx-auto">
+        {/* Progress Bar */}
+        <ProgressBar currentStep={2} />
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-y-12 gap-x-8 lg:gap-x-12">
+          {/* Delivery Details Form Section */}
           <div className="lg:col-span-2">
-            <h2 className="text-xl text-slate-900 font-semibold mb-6">Delivery Details</h2>
-            <Suspense fallback={<div>Loading addresses...</div>}>
-              <SavedAddresses
-                deliveryDetails={deliveryDetails}
-                selectedAddressId={selectedAddressId}
-                handleRadioChange={handleRadioChange}
-                handleEdit={handleEdit}
-                handleDelete={handleDelete}
-                maxAddresses={MAX_ADDRESSES}
-              />
-            </Suspense>
-            <hr className="my-8" />
-            <Suspense fallback={<div>Loading form...</div>}>
-              <DeliveryForm
-                formData={formData}
-                handleChange={handleChange}
-                handleSubmit={handleSubmit}
-                isEditMode={isEditMode}
-                setFormData={setFormData}
-              />
-            </Suspense>
+            <DeliveryForm
+              formData={formData}
+              setFormData={setFormData}
+              handleChange={handleChange}
+              handleSubmit={handleSubmit}
+            />
           </div>
-          {/* Order Summary */}
-          <Suspense fallback={<div>Loading order summary...</div>}>
-            <OrderSummary items={cartItems} total={cartTotal} />
-          </Suspense>
+          {/* Order Summary Section */}
+          <div className="relative">
+            <OrderSummary
+              items={cartItems}
+              total={cartTotal}
+              onContinueShopping={handleContinueShopping}
+            />
+          </div>
         </div>
       </div>
     </div>

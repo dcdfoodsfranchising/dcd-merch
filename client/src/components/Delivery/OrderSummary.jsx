@@ -72,15 +72,13 @@ const OrderSummary = ({ items = [], total }) => {
       <div className="space-y-4 mt-8">
         <button
           type="button"
-          className="rounded px-4 py-2.5 w-full text-sm font-medium tracking-wide bg-red-700 hover:bg-red-800 text-white cursor-pointer"
-          style={{ minWidth: 192, fontSize: '1rem' }}
+          className="rounded-md px-4 py-2.5 w-full text-sm font-medium tracking-wide bg-red-700 hover:bg-red-800 text-white cursor-pointer"
         >
           Complete Purchase
         </button>
         <button
           type="button"
-          className="rounded px-4 py-2.5 w-full text-sm font-medium tracking-wide bg-white border border-red-700 text-red-700 hover:bg-red-50 cursor-pointer"
-          style={{ minWidth: 192, fontSize: '1rem' }}
+          className="rounded-md px-4 py-2.5 w-full text-sm font-medium tracking-wide bg-gray-100 hover:bg-gray-200 border border-gray-300 text-slate-900 cursor-pointer"
         >
           Continue Shopping
         </button>

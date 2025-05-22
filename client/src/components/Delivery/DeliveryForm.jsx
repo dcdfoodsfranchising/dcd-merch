@@ -23,7 +23,7 @@ const DeliveryForm = React.memo(({ formData, handleChange, handleSubmit, isEditM
 
   return (
     <div>
-      <h3 className="text-lg font-medium mb-2">{isEditMode ? 'Edit Address' : 'Add New Delivery Details'}</h3>
+      <h2 className="text-xl text-slate-900 font-semibold mb-6">Delivery Details</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid lg:grid-cols-2 gap-y-6 gap-x-4">
           <div>
@@ -35,7 +35,7 @@ const DeliveryForm = React.memo(({ formData, handleChange, handleSubmit, isEditM
               onChange={handleChange}
               required
               placeholder="Enter First Name"
-              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded focus:outline-red-700"
+              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded-md focus:outline-red-600"
             />
           </div>
           <div>
@@ -47,7 +47,7 @@ const DeliveryForm = React.memo(({ formData, handleChange, handleSubmit, isEditM
               onChange={handleChange}
               required
               placeholder="Enter Last Name"
-              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded focus:outline-red-700"
+              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded-md focus:outline-red-600"
             />
           </div>
           <div>
@@ -59,7 +59,7 @@ const DeliveryForm = React.memo(({ formData, handleChange, handleSubmit, isEditM
               onChange={handleChange}
               required
               placeholder="Enter Contact Number"
-              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded focus:outline-red-700"
+              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded-md focus:outline-red-600"
             />
           </div>
           <div>
@@ -71,7 +71,7 @@ const DeliveryForm = React.memo(({ formData, handleChange, handleSubmit, isEditM
               onChange={handleChange}
               required
               placeholder="Enter Barangay"
-              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded focus:outline-red-700"
+              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded-md focus:outline-red-600"
             />
           </div>
           <div>
@@ -83,7 +83,7 @@ const DeliveryForm = React.memo(({ formData, handleChange, handleSubmit, isEditM
               onChange={handleChange}
               required
               placeholder="Enter City"
-              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded focus:outline-red-700"
+              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded-md focus:outline-red-600"
             />
           </div>
           <div>
@@ -95,7 +95,7 @@ const DeliveryForm = React.memo(({ formData, handleChange, handleSubmit, isEditM
               onChange={handleChange}
               required
               placeholder="Enter Postal Code"
-              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded focus:outline-red-700"
+              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded-md focus:outline-red-600"
             />
           </div>
           <div className="lg:col-span-2">
@@ -107,7 +107,7 @@ const DeliveryForm = React.memo(({ formData, handleChange, handleSubmit, isEditM
               onChange={handleChange}
               required
               placeholder="Enter Complete Address"
-              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded focus:outline-red-700"
+              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded-md focus:outline-red-600"
             />
           </div>
           <div>
@@ -118,7 +118,7 @@ const DeliveryForm = React.memo(({ formData, handleChange, handleSubmit, isEditM
               value={formData.tag}
               onChange={handleChange}
               placeholder="e.g. Home, Office"
-              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded focus:outline-red-700"
+              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded-md focus:outline-red-600"
             />
           </div>
           <div>
@@ -129,17 +129,9 @@ const DeliveryForm = React.memo(({ formData, handleChange, handleSubmit, isEditM
               value={formData.notesForRider}
               onChange={handleChange}
               placeholder="Optional notes for rider"
-              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded focus:outline-red-700"
+              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded-md focus:outline-red-600"
             />
           </div>
-        </div>
-        <div className="text-center">
-          <button
-            type="submit"
-            className="mt-4 px-6 py-2 bg-red-700 text-white hover:bg-red-800 font-semibold uppercase tracking-wide rounded text-sm w-48"
-          >
-            {isEditMode ? 'Update Address' : 'Save Address'}
-          </button>
         </div>
       </form>
     </div>
