@@ -113,7 +113,7 @@ module.exports.getOrders = async (req, res) => {
         const orders = await Order.find({ userId: req.user.id }).populate({
             path: 'productsOrdered.productId',
             select: 'name description price',
-            model: 'Product' // Ensure you specify the model if needed
+            model: 'Product'
         });
 
         // If no orders found, return an empty array
@@ -121,13 +121,14 @@ module.exports.getOrders = async (req, res) => {
             return res.status(200).json({ message: 'No orders found', orders: [] });
         }
 
-        // Return the orders with product details and status
+        // Return the orders with product details, delivery details, and status
         res.status(200).json({
             orders: orders.map(order => ({
                 _id: order._id,
                 orderedOn: order.orderedOn,
-                status: order.status,  // Add status to response
+                status: order.status,
                 totalPrice: order.totalPrice,
+                deliveryDetails: order.deliveryDetails, // <-- include delivery details
                 productsOrdered: order.productsOrdered.map(item => ({
                     productId: item.productId._id,
                     name: item.productId.name,
