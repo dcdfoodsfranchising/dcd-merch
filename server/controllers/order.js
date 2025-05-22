@@ -1,6 +1,7 @@
 const Cart = require("../Models/Cart");
 const Product = require("../Models/Product");
 const Order = require("../Models/Order");
+const DeliveryDetails = require("../Models/DeliveryDetails");
 const auth = require('../middlewares/auth');
 const bcrypt = require('bcryptjs');
 const express = require('express');
@@ -69,7 +70,18 @@ module.exports.createOrder = async (req, res) => {
             productsOrdered,
             totalPrice,
             status: "Pending",
-            deliveryDetails, // ✅ Embed delivery details
+            deliveryDetails: {
+                firstName: deliveryDetails.firstName,
+                lastName: deliveryDetails.lastName,
+                contactNumber: deliveryDetails.contactNumber,
+                barangay: deliveryDetails.barangay,
+                city: deliveryDetails.city,
+                postalCode: deliveryDetails.postalCode,
+                // Add other fields as needed
+                completeAddress: deliveryDetails.completeAddress,
+                tag: deliveryDetails.tag,
+                notesForRider: deliveryDetails.notesForRider
+            }
         });
 
         await order.save();
