@@ -7,6 +7,7 @@ import UserContext from "./context/UserContext";
 import AdminSidebar from "./components/AppNavbar/AdminSidebar";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
+import SkeletonAppLoader from "./components/SkeletonAppLoader"; // <-- import the skeleton loader
 
 // Lazy load route components
 const Home = lazy(() => import("./pages/Home"));
@@ -145,9 +146,9 @@ function App() {
             {user?.isAdmin && <AdminSidebar isExpanded={isSidebarExpanded} toggleSidebar={toggleSidebar} />}
             <main className={`transition-all duration-300 flex-1 ${user?.isAdmin ? (isSidebarExpanded ? "ml-64" : "ml-20") : "ml-0"}`}>
               {loading ? (
-                <div className="text-center text-lg">Loading...</div>
+                <SkeletonAppLoader />
               ) : (
-                <Suspense fallback={<div className="text-center text-lg">Loading page...</div>}>
+                <Suspense fallback={<SkeletonAppLoader />}>
                   <Routes>
                     {/* Routes WITH navbar */}
                     <Route element={<MainLayout />}>

@@ -96,15 +96,15 @@ export default function AdminProducts() {
 
       <div className="overflow-x-auto p-6 z-[10]">
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <table className="table-auto w-full">
+          <table className="table-auto w-full min-w-[700px]">
             <thead>
               <tr className="bg-gray-200 text-center">
-                <th className="p-4 text-left">Product Name</th>
-                <th className="p-4 text-left">Description</th>
-                <th className="p-4 text-left">Price</th>
-                <th className="p-4 text-left">Quantity</th>
-                <th className="p-4 text-left">Status</th>
-                <th className="p-4 text-center">Actions</th>
+                <th className="p-4 text-left min-w-[180px]">Product Name</th>
+                <th className="p-4 text-left w-32 min-w-[120px] max-w-xs">Description</th>
+                <th className="p-4 text-left w-56 min-w-[140px] whitespace-nowrap">Price</th>
+                <th className="p-4 text-left min-w-[100px] whitespace-nowrap">Quantity</th>
+                <th className="p-4 text-left min-w-[110px]">Status</th>
+                <th className="p-4 text-center min-w-[90px]">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -119,36 +119,54 @@ export default function AdminProducts() {
                       />
                       <span>{product.name}</span>
                     </td>
-                    <td className="p-4">{product.description}</td>
-                    <td className="p-4">₱{product.price.toFixed(2)}</td>
-                    <td className="p-4">{product.quantity}</td>
+                    <td className="p-4 w-40 max-w-xs truncate" title={product.description}>
+                      {product.description}
+                    </td>
+                    <td className="p-4 w-56">
+                      {Array.isArray(product.variants) && product.variants.length > 0
+                        ? (() => {
+                            const prices = product.variants
+                              .map(v => v.price)
+                              .filter(price => typeof price === "number" && !isNaN(price));
+                            if (prices.length === 0) return "N/A";
+                            const min = Math.min(...prices);
+                            const max = Math.max(...prices);
+                            return min === max
+                              ? `₱${min.toFixed(2)}`
+                              : `₱${min.toFixed(2)} - ₱${max.toFixed(2)}`;
+                          })()
+                        : "N/A"}
+                    </td>
+                    <td className="p-4">
+                      {Array.isArray(product.variants) && product.variants.length > 0
+                        ? product.variants.reduce((sum, v) => sum + (v.quantity || 0), 0)
+                        : "N/A"}
+                    </td>
                     <td className={`p-4 font-bold ${product.isActive ? "text-green-600" : "text-red-600"}`}>
                       {product.isActive ? "Available" : "Archived"}
+                      <label className="relative inline-flex items-center cursor-pointer ml-2">
+                        <input
+                          type="checkbox"
+                          checked={product.isActive}
+                          onChange={() => handleToggleProduct(product._id, !product.isActive)}
+                          className="sr-only peer"
+                        />
+                        <div
+                          className={`w-12 h-6 flex items-center rounded-full p-1 transition-all ${
+                            product.isActive ? "bg-green-500" : "bg-gray-400"
+                          }`}
+                        >
+                          <div
+                            className={`h-4 w-4 bg-white rounded-full shadow-md transform transition-transform ${
+                              product.isActive ? "translate-x-6" : "translate-x-0"
+                            }`}
+                          ></div>
+                        </div>
+                      </label>
                     </td>
                     <td className="p-4 text-center">
                       <div className="flex justify-center space-x-3 items-center">
-                        <button className="text-black hover:text-blue-500 transition" onClick={() => handleEditClick(product._id)}>
-                          <FiEdit size={24} />
-                        </button>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={product.isActive}
-                            onChange={() => handleToggleProduct(product._id, !product.isActive)}
-                            className="sr-only peer"
-                          />
-                          <div
-                            className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-all ${
-                              product.isActive ? "bg-green-500" : "bg-gray-400"
-                            }`}
-                          >
-                            <div
-                              className={`h-4 w-4 bg-white rounded-full shadow-md transform transition-transform ${
-                                product.isActive ? "translate-x-6" : "translate-x-0"
-                              }`}
-                            ></div>
-                          </div>
-                        </label>
+                        <FiEdit className="cursor-pointer hover:text-blue-500 transition" onClick={() => handleEditClick(product._id)} />
                       </div>
                     </td>
                   </tr>

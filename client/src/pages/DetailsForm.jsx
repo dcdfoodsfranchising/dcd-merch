@@ -1,226 +1,180 @@
-import React, { useEffect, useState } from 'react';
-import { getOwnDeliveryDetails, saveDeliveryDetails } from '../services/deliveryDetailsService';
+import React, { useEffect, useState, Suspense, lazy, useCallback } from 'react';
+import { getOwnDeliveryDetails, saveDeliveryDetails, deleteDeliveryDetails } from '../services/deliveryDetailsService';
+import { getCartItems } from '../services/cartService'; // adjust path as needed
 import Swal from 'sweetalert2';
-import { FaEdit } from 'react-icons/fa'; // Import edit icon
-import Modal from 'react-modal';
+
+const SavedAddresses = lazy(() => import('../components/Delivery/SavedAddresses'));
+const DeliveryForm = lazy(() => import('../components/Delivery/DeliveryForm'));
+const OrderSummary = lazy(() => import('../components/Delivery/OrderSummary'));
+
+const MAX_ADDRESSES = 5;
+
+const initialForm = {
+  firstName: '',
+  lastName: '',
+  contactNumber: '',
+  barangay: '',
+  city: '',
+  postalCode: '',
+  completeAddress: '',
+  tag: '',
+  notesForRider: '',
+};
 
 const DeliveryDetails = () => {
-    const [deliveryDetails, setDeliveryDetails] = useState(null);
-    const [formData, setFormData] = useState({
-        fullName: '',
-        mobileNo: '',
-        street: '',
-        barangay: '',
-        city: '',
-        province: '',
-        zipCode: '',
+  const [deliveryDetails, setDeliveryDetails] = useState([]);
+  const [formData, setFormData] = useState(initialForm);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [currentAddressId, setCurrentAddressId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [cartItems, setCartItems] = useState([]);
+  const [cartTotal, setCartTotal] = useState('₱0.00');
+
+  useEffect(() => {
+    fetchDetails();
+    // eslint-disable-next-line
+  }, []);
+
+  const fetchDetails = useCallback(async () => {
+    try {
+      const response = await getOwnDeliveryDetails();
+      // response is a single object, not an array
+      setDeliveryDetails(response ? [response] : []);
+      if (response && response._id) {
+        setSelectedAddressId(response._id);
+      }
+    } catch (error) {
+      console.error(error.message);
+    }
+  }, []);
+
+  const handleChange = useCallback((e) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  }, []);
+
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    try {
+      await saveDeliveryDetails(isEditMode ? { ...formData, _id: currentAddressId } : formData);
+      Swal.fire('Success!', `Address ${isEditMode ? 'updated' : 'saved'} successfully!`, 'success');
+      setIsModalOpen(false);
+      setIsEditMode(false);
+      setCurrentAddressId(null);
+      setFormData(initialForm);
+      fetchDetails();
+    } catch (error) {
+      Swal.fire('Error', error.message || 'Something went wrong', 'error');
+    }
+  }, [isEditMode, formData, currentAddressId, fetchDetails]);
+
+  const handleEdit = useCallback((address) => {
+    setIsEditMode(true);
+    setCurrentAddressId(address._id);
+    setFormData(address);
+    setIsModalOpen(true);
+  }, []);
+
+  const handleDelete = useCallback(async (addressId) => {
+    const confirm = await Swal.fire({
+      title: 'Delete Address?',
+      text: 'Are you sure you want to delete this address?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete it!',
     });
-    const [isEditMode, setIsEditMode] = useState(false); // State to toggle between add/edit mode
-    const [currentAddressId, setCurrentAddressId] = useState(null); // To track which address is being edited
-    const [isModalOpen, setIsModalOpen] = useState(false); // To control modal visibility
-
-    useEffect(() => {
-        const fetchDetails = async () => {
-            try {
-                const details = await getOwnDeliveryDetails();
-                setDeliveryDetails(details);
-
-                // Handle the case where details are loaded but no addresses are available
-                if (details && details.length > 0) {
-                    setFormData(details[0]); // Assuming the first address is the one we are editing
-                }
-            } catch (error) {
-                console.error(error.message);
-            }
-        };
-
+    if (confirm.isConfirmed) {
+      try {
+        await deleteDeliveryDetails(addressId);
+        Swal.fire('Deleted!', 'Address has been deleted.', 'success');
         fetchDetails();
-    }, []);
+      } catch (error) {
+        Swal.fire('Error', error.message || 'Something went wrong', 'error');
+      }
+    }
+  }, [fetchDetails]);
 
-    const handleChange = (e) => {
-        setFormData(prev => ({
-            ...prev,
-            [e.target.name]: e.target.value
-        }));
-    };
+  const handleRadioChange = useCallback((addressId) => {
+    setSelectedAddressId(addressId);
+    const selected = deliveryDetails.find(addr => addr._id === addressId);
+    if (selected) {
+      setFormData(selected);
+      setIsEditMode(false);
+      setCurrentAddressId(null);
+    }
+  }, [deliveryDetails]);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            await saveDeliveryDetails(formData); // Save delivery details (add or update based on logic)
-            Swal.fire('Success!', 'Delivery details saved successfully!', 'success');
-            setIsModalOpen(false); // Close modal after saving
-        } catch (error) {
-            Swal.fire('Error', error.message || 'Something went wrong', 'error');
+  useEffect(() => {
+    if (
+      deliveryDetails.length === 1 &&
+      Object.values(formData).every(val => val === '' || val == null)
+    ) {
+      setSelectedAddressId(deliveryDetails[0]._id);
+      setFormData(deliveryDetails[0]);
+    }
+  }, [deliveryDetails]); // eslint-disable-line
+
+  useEffect(() => {
+    const fetchCart = async () => {
+      try {
+        const data = await getCartItems();
+        if (data?.cart && Array.isArray(data.cart.cartItems)) {
+          setCartItems(data.cart.cartItems);
+          setCartTotal(
+            data.cart.totalPrice !== undefined
+              ? `₱${Number(data.cart.totalPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+              : '₱0.00'
+          );
+        } else {
+          setCartItems([]);
+          setCartTotal('₱0.00');
         }
+      } catch {
+        setCartItems([]);
+        setCartTotal('₱0.00');
+      }
     };
+    fetchCart();
+  }, []);
 
-    const handleEdit = (addressId) => {
-        setIsEditMode(true);
-        setCurrentAddressId(addressId); // Set the address ID to edit
-        const addressToEdit = deliveryDetails.find(address => address._id === addressId);
-        setFormData(addressToEdit);
-        setIsModalOpen(true); // Open modal in edit mode
-    };
-
-    const handleAdd = () => {
-        setIsEditMode(false);
-        setFormData({
-            fullName: '',
-            mobileNo: '',
-            street: '',
-            barangay: '',
-            city: '',
-            province: '',
-            zipCode: '',
-        });
-        setIsModalOpen(true); // Open modal for adding a new address
-    };
-
-    return (
-        <div className="max-w-4xl mx-auto mt-10 px-6">
-            <h2 className="text-2xl font-semibold text-center mb-6">Delivery Details</h2>
-
-            {/* Display existing address if any */}
-            {deliveryDetails && deliveryDetails.length > 0 ? (
-                <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
-                    <h3 className="text-xl font-medium mb-4">Saved Address</h3>
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <p><strong>Name:</strong> {deliveryDetails[0].fullName}</p>
-                            <p><strong>Mobile:</strong> {deliveryDetails[0].mobileNo}</p>
-                            <p><strong>Address:</strong> {`${deliveryDetails[0].street}, ${deliveryDetails[0].barangay}, ${deliveryDetails[0].city}, ${deliveryDetails[0].province}, ${deliveryDetails[0].zipCode}`}</p>
-                        </div>
-                        <button
-                            onClick={() => handleEdit(deliveryDetails[0]._id)} // Trigger edit mode
-                            className="text-blue-500 hover:text-blue-600"
-                        >
-                            <FaEdit />
-                        </button>
-                    </div>
-                </div>
-            ) : (
-                <div className="bg-white shadow-lg rounded-lg p-6 mb-6 text-center">
-                    <p>No delivery address saved yet.</p>
-                    <button
-                        onClick={handleAdd} // Show modal to add a new address
-                        className="text-blue-500 hover:text-blue-600"
-                    >
-                        + Add New Address
-                    </button>
-                </div>
-            )}
-
-            {/* Modal for Add/Edit Address */}
-            <Modal
-                isOpen={isModalOpen}
-                onRequestClose={() => setIsModalOpen(false)}
-                contentLabel={isEditMode ? 'Edit Address' : 'Add New Address'}
-                className="modal-content"
-                overlayClassName="modal-overlay"
-            >
-                <h5 className="text-lg font-medium mb-4">{isEditMode ? 'Update Address' : 'Add New Address'}</h5>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                            <input
-                                type="text"
-                                name="fullName"
-                                value={formData.fullName}
-                                onChange={handleChange}
-                                required
-                                className="mt-1 block w-full px-4 py-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Mobile Number</label>
-                            <input
-                                type="text"
-                                name="mobileNo"
-                                value={formData.mobileNo}
-                                onChange={handleChange}
-                                required
-                                className="mt-1 block w-full px-4 py-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Street</label>
-                        <input
-                            type="text"
-                            name="street"
-                            value={formData.street}
-                            onChange={handleChange}
-                            required
-                            className="mt-1 block w-full px-4 py-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Barangay</label>
-                            <input
-                                type="text"
-                                name="barangay"
-                                value={formData.barangay}
-                                onChange={handleChange}
-                                required
-                                className="mt-1 block w-full px-4 py-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">City</label>
-                            <input
-                                type="text"
-                                name="city"
-                                value={formData.city}
-                                onChange={handleChange}
-                                required
-                                className="mt-1 block w-full px-4 py-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Province</label>
-                            <input
-                                type="text"
-                                name="province"
-                                value={formData.province}
-                                onChange={handleChange}
-                                required
-                                className="mt-1 block w-full px-4 py-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">ZIP Code</label>
-                        <input
-                            type="text"
-                            name="zipCode"
-                            value={formData.zipCode}
-                            onChange={handleChange}
-                            required
-                            className="mt-1 block w-full px-4 py-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
-
-                    <div className="text-center">
-                        <button
-                            type="submit"
-                            className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200"
-                        >
-                            {isEditMode ? 'Update Address' : 'Save Address'}
-                        </button>
-                    </div>
-                </form>
-            </Modal>
+  return (
+    <div className="bg-white sm:px-8 px-4 py-6">
+      <div className="max-w-screen-xl max-md:max-w-xl mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-y-12 gap-x-8 lg:gap-x-12">
+          <div className="lg:col-span-2">
+            <h2 className="text-xl text-slate-900 font-semibold mb-6">Delivery Details</h2>
+            <Suspense fallback={<div>Loading addresses...</div>}>
+              <SavedAddresses
+                deliveryDetails={deliveryDetails}
+                selectedAddressId={selectedAddressId}
+                handleRadioChange={handleRadioChange}
+                handleEdit={handleEdit}
+                handleDelete={handleDelete}
+                maxAddresses={MAX_ADDRESSES}
+              />
+            </Suspense>
+            <hr className="my-8" />
+            <Suspense fallback={<div>Loading form...</div>}>
+              <DeliveryForm
+                formData={formData}
+                handleChange={handleChange}
+                handleSubmit={handleSubmit}
+                isEditMode={isEditMode}
+                setFormData={setFormData}
+              />
+            </Suspense>
+          </div>
+          {/* Order Summary */}
+          <Suspense fallback={<div>Loading order summary...</div>}>
+            <OrderSummary items={cartItems} total={cartTotal} />
+          </Suspense>
         </div>
-    );
+      </div>
+    </div>
+  );
 };
 
 export default DeliveryDetails;

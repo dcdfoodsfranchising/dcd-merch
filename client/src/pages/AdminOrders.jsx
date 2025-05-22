@@ -1,26 +1,23 @@
 import React, { useState, useEffect } from "react";
 import io from "socket.io-client";
-import { fetchAllOrders } from "../services/orderService";
+import { fetchAllOrders, updateOrderStatus } from "../services/orderService";
 import OrderTable from "../components/Order/OrderTable";
-import moment from "moment"; // ✅ For date filtering
-import { updateOrderStatus } from "../services/orderService";
+import moment from "moment";
 
-const socket = io(process.env.REACT_APP_API_BASE_URL); // ✅ Connect to WebSocket server
+const socket = io(process.env.REACT_APP_API_BASE_URL);
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
   const [activeTab, setActiveTab] = useState("All");
   const [pendingCount, setPendingCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [filterType, setFilterType] = useState("day"); // ✅ Default filter: Today
-  const [selectedDate, setSelectedDate] = useState(moment().format("YYYY-MM-DD")); // ✅ Default: Today
+  const [filterType, setFilterType] = useState("day");
+  const [selectedDate, setSelectedDate] = useState(moment().format("YYYY-MM-DD"));
 
   useEffect(() => {
     loadOrders();
 
-    // ✅ Listen for real-time order updates
     socket.on("newOrder", (newOrder) => {
-      console.log("📢 New Order Received:", newOrder);
       setOrders((prevOrders) => {
         const updatedOrders = [newOrder, ...prevOrders].sort((a, b) => new Date(b.orderedOn) - new Date(a.orderedOn));
         updatePendingCount(updatedOrders);
@@ -29,8 +26,9 @@ export default function AdminOrders() {
     });
 
     return () => {
-      socket.off("newOrder"); // Cleanup on unmount
+      socket.off("newOrder");
     };
+    // eslint-disable-next-line
   }, []);
 
   const loadOrders = async () => {
@@ -58,7 +56,7 @@ export default function AdminOrders() {
 
   const handleFilterChange = (event) => {
     setFilterType(event.target.value);
-    setSelectedDate(moment().format("YYYY-MM-DD")); // Reset date to today when changing filter type
+    setSelectedDate(moment().format("YYYY-MM-DD"));
   };
 
   const handleDateChange = (event) => {
@@ -78,31 +76,26 @@ export default function AdminOrders() {
       if (filterType === "month") {
         return orderDate.isSame(now, "month");
       }
-      return true; // Default: Show all
+      return true;
     });
   };
 
-  const filteredOrders = filterOrdersByDate(activeTab === "All" ? orders : orders.filter(order => order.status === activeTab));
+  const filteredOrders = filterOrdersByDate(
+    activeTab === "All" ? orders : orders.filter(order => order.status === activeTab)
+  );
 
   const handleUpdateStatus = async (orderId, newStatus) => {
     try {
       const updatedOrder = await updateOrderStatus(orderId, newStatus);
-      console.log('Updated Order:', updatedOrder); // Check if the status is updated here
-    
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order._id === orderId ? { ...order, status: updatedOrder.status } : order
         )
       );
-      console.log(`✅ Order ${orderId} updated to ${newStatus}`);
     } catch (error) {
       console.error("❌ Failed to update order:", error);
     }
   };
-  
-  
-
-  
 
   return (
     <div className="container mx-auto p-6">
@@ -111,7 +104,6 @@ export default function AdminOrders() {
       {/* Filter Bar */}
       <div className="flex justify-between mb-6">
         <div className="flex space-x-4">
-          {/* Filter Type Dropdown */}
           <select
             value={filterType}
             onChange={handleFilterChange}
@@ -121,8 +113,6 @@ export default function AdminOrders() {
             <option value="week">Week</option>
             <option value="month">Month</option>
           </select>
-
-          {/* Date Picker (only visible when filtering by day) */}
           {filterType === "day" && (
             <input
               type="date"
@@ -154,12 +144,23 @@ export default function AdminOrders() {
         ))}
       </div>
 
-      {/* Show Loading Indicator */}
-      {loading ? (
-        <p className="text-center text-gray-500">Loading orders...</p>
-      ) : (
-        <OrderTable orders={filteredOrders} onUpdateStatus={handleUpdateStatus} />
-      )}
+      {/* Table Container (responsive, scrollable) */}
+      <div className="overflow-x-auto p-6 z-[10]">
+        <div className="bg-white shadow-md rounded-lg overflow-hidden">
+          {loading ? (
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-pulse w-full">
+                <div className="h-6 bg-gray-200 rounded mb-4 w-1/2 mx-auto"></div>
+                <div className="h-4 bg-gray-100 rounded mb-2 w-5/6 mx-auto"></div>
+                <div className="h-4 bg-gray-100 rounded mb-2 w-2/3 mx-auto"></div>
+                <div className="h-4 bg-gray-100 rounded w-3/4 mx-auto"></div>
+              </div>
+            </div>
+          ) : (
+            <OrderTable orders={filteredOrders} onUpdateStatus={handleUpdateStatus} />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

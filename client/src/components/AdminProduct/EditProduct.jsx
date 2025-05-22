@@ -13,29 +13,32 @@ export default function EditProduct({ productId, isOpen, onClose, onProductUpdat
     const [productData, setProductData] = useState({
         name: "",
         description: "",
-        price: "",
-        quantity: "",
         images: [],
+        variants: [{ size: "", color: "", price: "", quantity: "" }],
     });
 
     const [loading, setLoading] = useState(false);
     const [newImages, setNewImages] = useState([]); 
-    const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false); // State for delete confirmation modal
+    const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
 
     // Fetch product details when modal opens
     useEffect(() => {
         if (isOpen && productId) {
             const fetchProductData = async () => {
                 try {
-                    const response = await getProductById(productId);
-                    const product = response.product;
-
+                    const product = await getProductById(productId);
                     setProductData({
                         name: product.name || "",
                         description: product.description || "",
-                        price: product.price || "",
-                        quantity: product.quantity || "",
                         images: product.images || [],
+                        variants: Array.isArray(product.variants) && product.variants.length > 0
+                            ? product.variants.map(v => ({
+                                size: v.size || "",
+                                color: v.color || "",
+                                price: v.price || "",
+                                quantity: v.quantity || ""
+                            }))
+                            : [{ size: "", color: "", price: "", quantity: "" }]
                     });
                 } catch (error) {
                     toast.error(`Failed to load product: ${error.message}`);
@@ -51,6 +54,30 @@ export default function EditProduct({ productId, isOpen, onClose, onProductUpdat
             ...prevState,
             [name]: value,
         }));
+    };
+
+    // Variant handlers
+    const handleVariantChange = (index, e) => {
+        const { name, value } = e.target;
+        setProductData((prevState) => {
+            const updatedVariants = [...prevState.variants];
+            updatedVariants[index][name] = value;
+            return { ...prevState, variants: updatedVariants };
+        });
+    };
+
+    const handleAddVariant = () => {
+        setProductData((prevState) => ({
+            ...prevState,
+            variants: [...prevState.variants, { size: "", color: "", price: "", quantity: "" }],
+        }));
+    };
+
+    const handleRemoveVariant = (index) => {
+        setProductData((prevState) => {
+            const updatedVariants = prevState.variants.filter((_, i) => i !== index);
+            return { ...prevState, variants: updatedVariants };
+        });
     };
 
     const handleImageChange = (e) => {
@@ -79,19 +106,22 @@ export default function EditProduct({ productId, isOpen, onClose, onProductUpdat
             // Upload new images if any are selected
             let uploadedImages = [];
             if (newImages.length > 0) {
-                const formData = new FormData();
-                newImages.forEach((image) => {
-                    formData.append("images", image);
-                });
-
-                const uploadResponse = await uploadProductImages(productId, formData);
-                uploadedImages = uploadResponse.images; // Get new image URLs
+                const uploadResponse = await uploadProductImages(productId, newImages);
+                uploadedImages = uploadResponse.images || [];
             }
 
-            // Update product with new images
+            // Prepare variants with correct types
+            const variants = productData.variants.map(v => ({
+                ...v,
+                price: Number(v.price),
+                quantity: Number(v.quantity)
+            }));
+
+            // Update product with new images and variants
             const updatedProductData = {
                 ...productData,
-                images: [...productData.images, ...uploadedImages], // Append new images
+                images: [...productData.images, ...uploadedImages],
+                variants
             };
 
             await updateProductInfo(productId, updatedProductData);
@@ -110,9 +140,9 @@ export default function EditProduct({ productId, isOpen, onClose, onProductUpdat
         try {
             await deleteProduct(productId);
             toast.success("Product deleted successfully!");
-            setIsConfirmDeleteOpen(false); // Close confirmation modal
-            onClose(); // Close edit modal
-            onProductUpdated(); // Refresh product list
+            setIsConfirmDeleteOpen(false);
+            onClose();
+            onProductUpdated();
         } catch (error) {
             toast.error("Failed to delete product.");
         }
@@ -122,8 +152,7 @@ export default function EditProduct({ productId, isOpen, onClose, onProductUpdat
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-96 relative">
-                
+            <div className="bg-white p-6 rounded-lg shadow-lg w-96 max-h-[90vh] overflow-y-auto relative">
                 {/* Close Icon (Top Right) */}
                 <button 
                     className="absolute top-2 right-2 text-gray-600 hover:text-gray-800" 
@@ -147,26 +176,74 @@ export default function EditProduct({ productId, isOpen, onClose, onProductUpdat
                         name="description" 
                         value={productData.description} 
                         onChange={handleInputChange} 
-                        required 
                         className="w-full p-2 border"
                     ></textarea>
-                    <input 
-                        type="number" 
-                        name="price" 
-                        value={productData.price} 
-                        onChange={handleInputChange} 
-                        required 
-                        className="w-full p-2 border" 
-                    />
-                    <input 
-                        type="number" 
-                        name="quantity" 
-                        value={productData.quantity} 
-                        onChange={handleInputChange} 
-                        required 
-                        className="w-full p-2 border" 
-                    />
-                    
+                    {/* description is now optional */}
+
+                    {/* Variants Section */}
+                    <div>
+                        <label className="font-semibold">Variants</label>
+                        {productData.variants.map((variant, idx) => (
+                            <div key={idx} className="flex gap-2 mb-2 items-center">
+                                <input
+                                    type="text"
+                                    name="size"
+                                    placeholder="Size"
+                                    value={variant.size}
+                                    onChange={(e) => handleVariantChange(idx, e)}
+                                    className="p-2 border w-16"
+                                    required
+                                />
+                                <input
+                                    type="text"
+                                    name="color"
+                                    placeholder="Color"
+                                    value={variant.color}
+                                    onChange={(e) => handleVariantChange(idx, e)}
+                                    className="p-2 border w-20"
+                                    required
+                                />
+                                <input
+                                    type="number"
+                                    name="price"
+                                    placeholder="Price"
+                                    value={variant.price}
+                                    onChange={(e) => handleVariantChange(idx, e)}
+                                    className="p-2 border w-20"
+                                    required
+                                    min="0"
+                                />
+                                <input
+                                    type="number"
+                                    name="quantity"
+                                    placeholder="Qty"
+                                    value={variant.quantity}
+                                    onChange={(e) => handleVariantChange(idx, e)}
+                                    className="p-2 border w-16"
+                                    required
+                                    min="0"
+                                />
+                                {productData.variants.length > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveVariant(idx)}
+                                        className="text-red-500 font-bold px-2"
+                                        title="Remove Variant"
+                                    >
+                                        ×
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                        <button
+                            type="button"
+                            onClick={handleAddVariant}
+                            className="text-blue-500 text-sm underline"
+                        >
+                            + Add Variant
+                        </button>
+                    </div>
+
                     {/* Display existing images */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Existing Images</label>

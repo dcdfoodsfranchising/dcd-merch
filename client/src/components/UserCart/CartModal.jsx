@@ -7,7 +7,6 @@ import {
 import { X } from "lucide-react";
 import { useContext } from "react";
 import UserContext from "../../context/UserContext";
-import ConfirmationModal from "./ConfirmationModal";
 import { useNavigate } from "react-router-dom";
 import CartCard from "./CartCard";
 import CheckoutButtons from "./CheckoutButtons";
@@ -18,9 +17,8 @@ export default function CartModal({ isOpen, onClose }) {
   const [cartItems, setCartItems] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [itemToRemove, setItemToRemove] = useState(null);
   const [showModal, setShowModal] = useState(isOpen);
+  const [removingItemIds, setRemovingItemIds] = useState([]);
 
   const navigate = useNavigate();
 
@@ -69,29 +67,18 @@ export default function CartModal({ isOpen, onClose }) {
     fetchCartItems
   );
 
-  const removeFromCart = (productId) => {
-    setItemToRemove(productId);
-    setShowConfirm(true);
-  };
-
-  const confirmRemove = async () => {
-    if (!itemToRemove) return;
+  // Remove item with animation (now just remove immediately)
+  const handleRemove = async (cartItem) => {
     setLoading(true);
     try {
-      const updatedCart = await removeCartItem(itemToRemove);
-      if (updatedCart?.cartItems) {
-        const itemsWithSubtotal = updatedCart.cartItems.map((item) => ({
-          ...item,
-          subtotal: (item.variant?.price ?? item.productId.price) * item.quantity,
-        }));
-        setCartItems(itemsWithSubtotal);
-        setTotalPrice(updatedCart.totalPrice || 0);
-      } else {
-        setCartItems([]);
-        setTotalPrice(0);
-      }
-      setShowConfirm(false);
+      await removeCartItem(
+        cartItem.productId._id,
+        cartItem.variant.size,
+        cartItem.variant.color
+      );
+      await fetchCartItems();
     } finally {
+      setRemovingItemIds((prev) => prev.filter(id => id !== cartItem._id));
       setLoading(false);
     }
   };
@@ -128,7 +115,7 @@ export default function CartModal({ isOpen, onClose }) {
       >
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-lg font-semibold">Your Cart</h2>
+          <h2 className="text-lg font-semibold">Shopping Cart</h2>
           <button onClick={onClose} className="text-gray-600 hover:text-black">
             <X size={24} />
           </button>
@@ -138,44 +125,48 @@ export default function CartModal({ isOpen, onClose }) {
         <div className="p-4 overflow-y-auto h-[70%]">
           {cartItems.length > 0 ? (
             cartItems.map((item) => (
-              <CartCard
-                key={item._id}
-                item={item}
-                loading={loadingItemId === item._id}
-                onDecrease={() => updateQuantity(item._id, item.quantity - 1)}
-                onIncrease={() => updateQuantity(item._id, item.quantity + 1)}
-                onRemove={() => removeFromCart(item._id)}
-              />
+              <div key={item._id}>
+                <CartCard
+                  item={item}
+                  loading={loadingItemId === item._id}
+                  onDecrease={() => updateQuantity(item._id, item.quantity - 1)}
+                  onIncrease={() => updateQuantity(item._id, item.quantity + 1)}
+                  onRemove={() => handleRemove(item)}
+                />
+              </div>
             ))
           ) : (
-            <p className="text-center text-gray-500">Your cart is empty.</p>
+            <div className="flex flex-col items-center justify-center w-full h-full">
+              <img src="/assets/icons/shopping.svg" alt="Empty cart" className="w-48 h-48 mb-4 opacity-80" />
+              <p className="text-center text-gray-500 mb-4">Your cart is empty.</p>
+              <button
+                className="px-6 py-2 bg-red-700 text-white hover:bg-red-600 transition"
+                onClick={onClose}
+              >
+                Continue Shopping
+              </button>
+            </div>
           )}
         </div>
 
         {/* Footer */}
         {cartItems.length > 0 && (
           <div className="p-4 border-t flex flex-col gap-2">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">
-                Total: ₱{Number(totalPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </h3>
+            <div className="flex justify-between items-center w-full">
+              <span className="text-lg font-semibold">Total:</span>
+              <span className="text-lg font-semibold">
+                ₱{Number(totalPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
             </div>
-            <CheckoutButtons
-              loading={loading}
-              cartItems={cartItems}
-              onClear={() => setShowConfirm(true)}
-              onCheckout={handleCheckout}
-            />
+            <button
+              className="mt-4 w-full px-6 py-3 bg-red-700 text-white text-lg font-semibold hover:bg-red-600 transition"
+              onClick={handleCheckout}
+              disabled={loading}
+            >
+              Checkout
+            </button>
           </div>
         )}
-
-        {/* Confirmation Modals */}
-        <ConfirmationModal
-          isOpen={showConfirm}
-          onClose={() => setShowConfirm(false)}
-          onConfirm={confirmRemove}
-          message="Are you sure you want to remove this item from your cart?"
-        />
       </div>
     </>
   );

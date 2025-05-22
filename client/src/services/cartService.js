@@ -56,24 +56,20 @@ export const updateCartQuantity = async (cartItem, quantity) => {
     return response.data.cart;
 };
 
-// Remove item from cart
-export const removeCartItem = async (cartItemId) => {
-    try {
-        const token = localStorage.getItem("token");
-        const response = await axios.patch(
-            `${API_BASE_URL}/cart/${cartItemId}/remove-from-cart`,
-            {}, // empty body
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
-        return response.data;
-    } catch (error) {
-        console.error("Error removing item from cart: ", error);
-        throw error;
-    }
+// Remove item from cart by productId
+export const removeCartItem = async (productId, size, color) => {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("No authentication token found.");
+    const response = await axios.patch(
+        `${API_BASE_URL}/cart/${productId}/remove-from-cart`,
+        { size, color },
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+    return response.data;
 };
 
 // Clear cart

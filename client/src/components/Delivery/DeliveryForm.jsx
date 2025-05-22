@@ -1,121 +1,149 @@
-import { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
-import UserContext from "../../context/UserContext";
-import { saveDeliveryDetails } from "../../services/deliveryDetailsService"; // Your API service
-import Swal from "sweetalert2"; // Optional for showing success/error alerts
+import React, { useEffect } from 'react';
 
-const DeliveryForm = () => {
-  const { user } = useContext(UserContext); // Get user info from context
-  const navigate = useNavigate(); // For redirection after form submission
+const initialForm = {
+  firstName: '',
+  lastName: '',
+  contactNumber: '',
+  barangay: '',
+  city: '',
+  postalCode: '',
+  completeAddress: '',
+  tag: '',
+  notesForRider: '',
+};
 
-  // State for the delivery form
-  const [deliveryDetails, setDeliveryDetails] = useState({
-    address: "",
-    phoneNumber: "",
-    city: "",
-    postalCode: "",
-  });
-
-  const [loading, setLoading] = useState(false);
-
-  // Handle form input changes
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setDeliveryDetails((prevDetails) => ({
-      ...prevDetails,
-      [name]: value,
-    }));
-  };
-
-  // Handle form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (loading) return; // Prevent multiple submissions
-
-    setLoading(true);
-
-    try {
-      const data = await saveDeliveryDetails(deliveryDetails, user.token);
-
-      Swal.fire({
-        icon: "success",
-        title: "Delivery details saved successfully",
-        text: "Your delivery information has been saved. Proceed to checkout.",
-      });
-
-      // Redirect to the checkout or confirmation page after saving the details
-      navigate("/checkout"); // Adjust to your desired route
-    } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.message || "Something went wrong",
-      });
-    } finally {
-      setLoading(false);
+const DeliveryForm = React.memo(({ formData, handleChange, handleSubmit, isEditMode, setFormData }) => {
+  // Always reset to empty fields if not editing
+  useEffect(() => {
+    if (!isEditMode) {
+      setFormData(initialForm);
     }
-  };
+    // eslint-disable-next-line
+  }, [isEditMode]);
 
   return (
-    <div className="max-w-md mx-auto mt-8 p-4 border rounded shadow-md">
-      <h2 className="text-2xl font-semibold text-center mb-4">Delivery Form</h2>
+    <div>
+      <h3 className="text-lg font-medium mb-2">{isEditMode ? 'Edit Address' : 'Add New Delivery Details'}</h3>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Address</label>
-          <input
-            type="text"
-            name="address"
-            value={deliveryDetails.address}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-md"
-            required
-          />
+        <div className="grid lg:grid-cols-2 gap-y-6 gap-x-4">
+          <div>
+            <label className="text-sm text-slate-900 font-medium block mb-2">First Name</label>
+            <input
+              type="text"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleChange}
+              required
+              placeholder="Enter First Name"
+              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded focus:outline-red-700"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-900 font-medium block mb-2">Last Name</label>
+            <input
+              type="text"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleChange}
+              required
+              placeholder="Enter Last Name"
+              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded focus:outline-red-700"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-900 font-medium block mb-2">Contact Number</label>
+            <input
+              type="text"
+              name="contactNumber"
+              value={formData.contactNumber}
+              onChange={handleChange}
+              required
+              placeholder="Enter Contact Number"
+              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded focus:outline-red-700"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-900 font-medium block mb-2">Barangay</label>
+            <input
+              type="text"
+              name="barangay"
+              value={formData.barangay}
+              onChange={handleChange}
+              required
+              placeholder="Enter Barangay"
+              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded focus:outline-red-700"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-900 font-medium block mb-2">City</label>
+            <input
+              type="text"
+              name="city"
+              value={formData.city}
+              onChange={handleChange}
+              required
+              placeholder="Enter City"
+              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded focus:outline-red-700"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-900 font-medium block mb-2">Postal Code</label>
+            <input
+              type="text"
+              name="postalCode"
+              value={formData.postalCode}
+              onChange={handleChange}
+              required
+              placeholder="Enter Postal Code"
+              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded focus:outline-red-700"
+            />
+          </div>
+          <div className="lg:col-span-2">
+            <label className="text-sm text-slate-900 font-medium block mb-2">Complete Address</label>
+            <input
+              type="text"
+              name="completeAddress"
+              value={formData.completeAddress}
+              onChange={handleChange}
+              required
+              placeholder="Enter Complete Address"
+              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded focus:outline-red-700"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-900 font-medium block mb-2">Tag</label>
+            <input
+              type="text"
+              name="tag"
+              value={formData.tag}
+              onChange={handleChange}
+              placeholder="e.g. Home, Office"
+              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded focus:outline-red-700"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-900 font-medium block mb-2">Notes for Rider</label>
+            <input
+              type="text"
+              name="notesForRider"
+              value={formData.notesForRider}
+              onChange={handleChange}
+              placeholder="Optional notes for rider"
+              className="px-4 py-2.5 bg-white border border-gray-400 text-slate-900 w-full text-sm rounded focus:outline-red-700"
+            />
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Phone Number</label>
-          <input
-            type="text"
-            name="phoneNumber"
-            value={deliveryDetails.phoneNumber}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-md"
-            required
-          />
+        <div className="text-center">
+          <button
+            type="submit"
+            className="mt-4 px-6 py-2 bg-red-700 text-white hover:bg-red-800 font-semibold uppercase tracking-wide rounded text-sm w-48"
+          >
+            {isEditMode ? 'Update Address' : 'Save Address'}
+          </button>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">City</label>
-          <input
-            type="text"
-            name="city"
-            value={deliveryDetails.city}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-md"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Postal Code</label>
-          <input
-            type="text"
-            name="postalCode"
-            value={deliveryDetails.postalCode}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-md"
-            required
-          />
-        </div>
-        <button
-          type="submit"
-          className={`w-full py-3 mt-4 text-white bg-blue-500 rounded-md ${
-            loading ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-          disabled={loading}
-        >
-          {loading ? "Saving..." : "Save Delivery Details"}
-        </button>
       </form>
     </div>
   );
-};
+});
 
 export default DeliveryForm;

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
 
 // Function to get the token from localStorage (or sessionStorage)
 const getAuthToken = () => {
@@ -35,14 +35,14 @@ export const getOwnDeliveryDetails = async () => {
     try {
         const token = getAuthToken(); // Retrieve the token automatically
         const response = await axios.get(
-            `${API_BASE_URL}/details/delivery-details`,
+            `${API_BASE_URL}/details/delivery-details/user`,
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             }
         );
-        return response.data.deliveryDetails;
+        return response.data;
     } catch (error) {
         throw error.response?.data || { message: 'Something went wrong' };
     }
@@ -60,7 +60,61 @@ export const getDeliveryDetailsByAdmin = async (userId) => {
                 },
             }
         );
-        return response.data.deliveryDetails;
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Something went wrong' };
+    }
+};
+
+// Delete delivery details
+export const deleteDeliveryDetails = async (id) => {
+    try {
+        const token = getAuthToken(); // Retrieve the token automatically
+        const response = await axios.delete(
+            `${API_BASE_URL}/details/delivery-details/${id}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Something went wrong' };
+    }
+};
+
+// Admin: Get all delivery details
+export const getAllDeliveryDetails = async () => {
+    try {
+        const token = getAuthToken(); // Retrieve the token automatically
+        const response = await axios.get(
+            `${API_BASE_URL}/details/delivery-details`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Something went wrong' };
+    }
+};
+
+// Admin: Get delivery details by ID
+export const getDeliveryDetailsById = async (id) => {
+    try {
+        const token = getAuthToken(); // Retrieve the token automatically
+        const response = await axios.get(
+            `${API_BASE_URL}/details/delivery-details/${id}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        return response.data;
     } catch (error) {
         throw error.response?.data || { message: 'Something went wrong' };
     }

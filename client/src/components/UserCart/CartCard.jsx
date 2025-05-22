@@ -23,13 +23,8 @@ export default function CartCard({ item, loading, onDecrease, onIncrease, onRemo
           <div>
             <h3 className="text-sm sm:text-base font-semibold text-slate-900 truncate">{item.productId.name}</h3>
             <div className="flex flex-wrap items-center gap-2 mt-1">
-              {variant && (
-                <span className="text-xs text-slate-500 border border-slate-200 rounded px-1 py-0.5">
-                  {variant}
-                </span>
-              )}
               {size && (
-                <span className="text-xs text-slate-500 border border-slate-200 rounded px-1 py-0.5">
+                <span className="text-xs text-slate-500 rounded px-1 py-0.5">
                   Size: {size}
                 </span>
               )}
@@ -37,7 +32,7 @@ export default function CartCard({ item, loading, onDecrease, onIncrease, onRemo
                 <span className="flex items-center text-xs text-slate-500 gap-1">
                   Color:
                   <span
-                    className="inline-block w-4 h-4 rounded-sm border border-gray-200"
+                    className="inline-block w-4 h-4 rounded-full border border-gray-200"
                     style={{ backgroundColor: color }}
                   />
                 </span>
@@ -58,7 +53,7 @@ export default function CartCard({ item, loading, onDecrease, onIncrease, onRemo
         <div className="flex items-center gap-2 mt-auto">
           <button
             onClick={item.quantity === 1 ? onRemove : onDecrease}
-            className={`flex items-center justify-center w-[22px] h-[22px] rounded-full transition-colors
+            className={`flex items-center justify-center w-[24px] h-[24px] rounded-full transition-colors
               ${item.quantity === 1
                 ? "bg-red-100 text-red-500 hover:bg-red-200 hover:text-red-700"
                 : "bg-slate-200 text-slate-700 hover:bg-slate-300"}

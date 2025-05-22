@@ -194,9 +194,13 @@ const ProductView = () => {
                   {Array.from({ length: 5 }, (_, index) => (
                     <span
                       key={index}
-                      className={`text-yellow-500 ${
-                        index < Math.round(averageRating) ? 'text-yellow-500' : 'text-gray-300'
-                      }`}
+                      className={
+                        product.reviews?.length
+                          ? index < Math.round(averageRating)
+                            ? 'text-yellow-500'
+                            : 'text-gray-300'
+                          : 'text-gray-300'
+                      }
                     >
                       ★
                     </span>
@@ -205,7 +209,8 @@ const ProductView = () => {
                 <p className="text-sm text-slate-500">{product.reviews?.length || 0} reviews</p>
                 <p className="text-sm text-slate-500">{product.sold || 0} sold</p>
               </div>
-              <div className="flex items-center flex-wrap gap-4 mt-6">
+              <div className="flex items-center flex-wrap gap-4 mt-2">
+                {/* Reduced mt-6 to mt-2 for less space above price */}
                 <h4 className="text-slate-900 text-2xl sm:text-3xl font-semibold">
                   {selectedVariant
                     ? `₱${selectedVariant.price}`
@@ -213,22 +218,21 @@ const ProductView = () => {
                     ? `₱${priceRange.min}`
                     : `₱${product.price}`}
                 </h4>
-                <p className="text-slate-500 text-lg">
-                  <span className="text-sm ml-1.5">Tax included</span>
-                </p>
               </div>
-              <p className="text-slate-500 text-sm mt-2">Available Quantity: {product.quantity}</p>
               <Suspense fallback={<div>Loading variants...</div>}>
-                <ProductVariants
-                  product={product}
-                  sizeOptions={sizeOptions}
-                  colorOptions={colorOptions}
-                  onlyOneSizeAndColor={onlyOneSizeAndColor}
-                  selectedSize={selectedSize}
-                  setSelectedSize={setSelectedSize}
-                  selectedColor={selectedColor}
-                  setSelectedColor={setSelectedColor}
-                />
+                <div className="mt-4">
+                  {/* Added mt-4 for space between price and variants */}
+                  <ProductVariants
+                    product={product}
+                    sizeOptions={sizeOptions}
+                    colorOptions={colorOptions}
+                    onlyOneSizeAndColor={onlyOneSizeAndColor}
+                    selectedSize={selectedSize}
+                    setSelectedSize={setSelectedSize}
+                    selectedColor={selectedColor}
+                    setSelectedColor={setSelectedColor}
+                  />
+                </div>
               </Suspense>
               <QuantitySelector
                 quantity={quantity}
@@ -247,15 +251,23 @@ const ProductView = () => {
                   type="button"
                   onClick={handleAddToCart}
                   className={`px-4 py-3 w-[45%] text-sm font-medium ${
-                    availableQuantity > 0 && !requiresVariantSelection
+                    availableQuantity > 0 && !requiresVariantSelection && localStorage.getItem('token')
                       ? 'border border-red-600 bg-red-600 hover:bg-red-700 text-white'
                       : 'border border-slate-400 bg-slate-300 text-slate-500 cursor-not-allowed'
                   }`}
-                  disabled={availableQuantity === 0 || requiresVariantSelection}
+                  disabled={
+                    availableQuantity === 0 ||
+                    requiresVariantSelection
+                  }
                 >
                   Add to cart
                 </button>
               </div>
+              {!localStorage.getItem('token') && (
+                <p className="text-center text-red-500 text-sm font-medium mt-2">
+                  Please login or register first to add items to your cart.
+                </p>
+              )}
               <hr className="my-6 border-slate-300" />
               <div>
                 <h3 className="text-lg sm:text-xl font-semibold text-slate-900">Product Information</h3>

@@ -9,6 +9,7 @@ import {
   FiBarChart2 
 } from "react-icons/fi"; // ✅ Import new icons
 import io from "socket.io-client";
+import ReactDOM from "react-dom";
 import LogoutModal from "../Auth/LogoutModal";
 import UserContext from "../../context/UserContext";
 import { fetchAllOrders } from "../../services/orderService";
@@ -144,7 +145,12 @@ export default function AdminSidebar({ isExpanded, toggleSidebar }) {
       </div>
 
       {/* Logout Modal */}
-      {isLogoutOpen && <LogoutModal isOpen={isLogoutOpen} onClose={() => setIsLogoutOpen(false)} onConfirm={handleLogout} />}
+      {isLogoutOpen &&
+        ReactDOM.createPortal(
+          <LogoutModal isOpen={isLogoutOpen} onClose={() => setIsLogoutOpen(false)} onConfirm={handleLogout} />,
+          document.body
+        )
+      }
     </div>
   );
 }

@@ -5,9 +5,10 @@ export default function CreateProduct({ onProductAdded, onClose }) {
   const [newProduct, setNewProduct] = useState({
     name: "",
     description: "",
-    price: "",
-    quantity: "",
     images: [],
+    variants: [
+      { size: "", color: "", price: "", quantity: "" }
+    ],
   });
   const [previewImages, setPreviewImages] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
@@ -28,10 +29,41 @@ export default function CreateProduct({ onProductAdded, onClose }) {
     setPreviewImages((prevState) => [...prevState, ...imagePreviews]);
   };
 
+  // Variant handlers
+  const handleVariantChange = (index, e) => {
+    const { name, value } = e.target;
+    setNewProduct((prevState) => {
+      const updatedVariants = [...prevState.variants];
+      updatedVariants[index][name] = value;
+      return { ...prevState, variants: updatedVariants };
+    });
+  };
+
+  const handleAddVariant = () => {
+    setNewProduct((prevState) => ({
+      ...prevState,
+      variants: [...prevState.variants, { size: "", color: "", price: "", quantity: "" }],
+    }));
+  };
+
+  const handleRemoveVariant = (index) => {
+    setNewProduct((prevState) => {
+      const updatedVariants = prevState.variants.filter((_, i) => i !== index);
+      return { ...prevState, variants: updatedVariants };
+    });
+  };
+
   const handleAddProduct = async (e) => {
     e.preventDefault();
     try {
-      const addedProduct = await createProduct(newProduct);
+      // Convert price and quantity to numbers for each variant
+      const variants = newProduct.variants.map(v => ({
+        ...v,
+        price: Number(v.price),
+        quantity: Number(v.quantity)
+      }));
+      const productToSend = { ...newProduct, variants };
+      const addedProduct = await createProduct(productToSend);
       onProductAdded(addedProduct);
       onClose();
     } catch (error) {
@@ -42,15 +74,89 @@ export default function CreateProduct({ onProductAdded, onClose }) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-      <div className="bg-white p-6 rounded shadow-lg w-96">
+      <div className="bg-white p-6 rounded shadow-lg w-96 max-h-[90vh] overflow-y-auto">
         <h2 className="text-lg font-bold mb-4">Add Product</h2>
         {errorMessage && <div className="bg-red-500 text-white p-2 rounded mb-2">{errorMessage}</div>}
 
         <form onSubmit={handleAddProduct} encType="multipart/form-data">
-          <input type="text" name="name" placeholder="Product Name" required onChange={handleInputChange} className="w-full p-2 border mb-2" />
-          <textarea name="description" placeholder="Description" required onChange={handleInputChange} className="w-full p-2 border mb-2"></textarea>
-          <input type="number" name="price" placeholder="Price" required onChange={handleInputChange} className="w-full p-2 border mb-2" />
-          <input type="number" name="quantity" placeholder="Quantity" required onChange={handleInputChange} className="w-full p-2 border mb-2" />
+          <input
+            type="text"
+            name="name"
+            placeholder="Product Name"
+            required
+            onChange={handleInputChange}
+            className="w-full p-2 border mb-2"
+          />
+          <textarea
+            name="description"
+            placeholder="Description"
+            onChange={handleInputChange}
+            className="w-full p-2 border mb-2"
+          ></textarea>
+
+          {/* Variants Section */}
+          <div className="mb-4">
+            <label className="font-semibold">Variants</label>
+            {newProduct.variants.map((variant, idx) => (
+              <div key={idx} className="flex gap-2 mb-2 items-center">
+                <input
+                  type="text"
+                  name="size"
+                  placeholder="Size"
+                  value={variant.size}
+                  onChange={(e) => handleVariantChange(idx, e)}
+                  className="p-2 border w-16"
+                  required
+                />
+                <input
+                  type="text"
+                  name="color"
+                  placeholder="Color"
+                  value={variant.color}
+                  onChange={(e) => handleVariantChange(idx, e)}
+                  className="p-2 border w-20"
+                  required
+                />
+                <input
+                  type="number"
+                  name="price"
+                  placeholder="Price"
+                  value={variant.price}
+                  onChange={(e) => handleVariantChange(idx, e)}
+                  className="p-2 border w-20"
+                  required
+                  min="0"
+                />
+                <input
+                  type="number"
+                  name="quantity"
+                  placeholder="Qty"
+                  value={variant.quantity}
+                  onChange={(e) => handleVariantChange(idx, e)}
+                  className="p-2 border w-16"
+                  required
+                  min="0"
+                />
+                {newProduct.variants.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveVariant(idx)}
+                    className="text-red-500 font-bold px-2"
+                    title="Remove Variant"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={handleAddVariant}
+              className="text-blue-500 text-sm underline"
+            >
+              + Add Variant
+            </button>
+          </div>
 
           {/* Image Upload Field */}
           <input type="file" name="images" multiple accept="image/*" onChange={handleImageChange} className="w-full p-2 border mb-2" />
