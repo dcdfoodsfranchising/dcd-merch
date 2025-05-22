@@ -16,14 +16,13 @@ module.exports.createOrder = async (req, res) => {
 
         // Fetch user's cart and delivery details
         const cart = await Cart.findOne({ userId }).populate("cartItems.productId");
-        const deliveryDetails = await DeliveryDetails.findOne({ userId });
+        const deliveryDetails = req.body.deliveryDetails;
+        if (!deliveryDetails) {
+            return res.status(400).json({ message: "No delivery details provided." });
+        }
 
         if (!cart || !cart.cartItems || cart.cartItems.length === 0) {
             return res.status(404).json({ message: "No items in the cart to checkout" });
-        }
-
-        if (!deliveryDetails) {
-            return res.status(400).json({ message: "No delivery details found. Please provide delivery information." });
         }
 
         let totalPrice = 0;
