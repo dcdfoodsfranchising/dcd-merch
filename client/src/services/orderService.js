@@ -26,7 +26,7 @@ export const fetchAllOrders = async () => {
  */
 export const getUserOrders = async () => {
     try {
-        const response = await axios.get(`${API_BASE_URL}/orders`, {
+        const response = await axios.get(`${API_BASE_URL}/orders/my-orders`, {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`
             }
@@ -41,9 +41,9 @@ export const getUserOrders = async () => {
 /**
  * Create a new order from the cart
  */
-export const createOrder = async () => {
+export const createOrder = async (deliveryDetails) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/orders/create`, {}, {
+        const response = await axios.post(`${API_BASE_URL}/orders/checkout`, { deliveryDetails }, {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`
             }

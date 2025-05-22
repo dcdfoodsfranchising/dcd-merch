@@ -8,6 +8,7 @@ import AdminSidebar from "./components/AppNavbar/AdminSidebar";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 import SkeletonAppLoader from "./components/SkeletonAppLoader"; // <-- import the skeleton loader
+import OrderConfirmation from "./pages/OrderConfirmation";
 
 // Lazy load route components
 const Home = lazy(() => import("./pages/Home"));
@@ -20,6 +21,7 @@ const DetailsForm = lazy(() => import("./pages/DetailsForm"));
 const CheckoutPage = lazy(() => import("./pages/Checkout"));
 const ProductView = lazy(() => import("./pages/ProductView"));
 const Profile = lazy(() => import("./pages/Profile"));
+const Order = lazy(() => import("./pages/Order"));
 
 function UserRedirector() {
   const navigate = useNavigate();
@@ -157,12 +159,14 @@ function App() {
                       <Route path="/register" element={<Register />} />
                       <Route path="/product/:productId" element={<ProductView />} />
                       <Route path="/profile" element={<Profile />} />
+                      <Route path="/orders" element={<Order />} />
                     </Route>
 
                     {/* Routes WITHOUT navbar */}
                     <Route element={<PlainLayout />}>
                       <Route path="/checkout" element={<CheckoutPage />} />
                       <Route path="/delivery" element={user?.id ? <DetailsForm /> : <Navigate to="/" />} />
+                      <Route path="/order-confirmation" element={<OrderConfirmation />} />
                     </Route>
 
                     {/* Admin Routes */}

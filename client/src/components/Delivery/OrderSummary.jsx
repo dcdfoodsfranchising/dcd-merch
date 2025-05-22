@@ -1,6 +1,14 @@
 import React from 'react';
 
-const OrderSummary = ({ items = [], total }) => {
+const OrderSummary = ({
+  items = [],
+  total,
+  formData,
+  onFormSave,
+  onOrderSuccess,
+  onOrderError,
+  onContinueShopping,
+}) => {
   // Compute total from items if not provided
   const computedTotal =
     items.length > 0
@@ -14,6 +22,20 @@ const OrderSummary = ({ items = [], total }) => {
           )
           .toLocaleString(undefined, { minimumFractionDigits: 2 })
       : total;
+
+  // Handles complete purchase: save delivery details, then create order
+  const handleCompletePurchase = async () => {
+    try {
+      if (onFormSave) {
+        await onFormSave(); // Save delivery details
+      }
+      if (onOrderSuccess) {
+        await onOrderSuccess(); // Create order and handle success
+      }
+    } catch (error) {
+      if (onOrderError) onOrderError(error);
+    }
+  };
 
   return (
     <div className="relative">
@@ -73,12 +95,14 @@ const OrderSummary = ({ items = [], total }) => {
         <button
           type="button"
           className="rounded-md px-4 py-2.5 w-full text-sm font-medium tracking-wide bg-red-700 hover:bg-red-800 text-white cursor-pointer"
+          onClick={handleCompletePurchase}
         >
           Complete Purchase
         </button>
         <button
           type="button"
           className="rounded-md px-4 py-2.5 w-full text-sm font-medium tracking-wide bg-gray-100 hover:bg-gray-200 border border-gray-300 text-slate-900 cursor-pointer"
+          onClick={onContinueShopping}
         >
           Continue Shopping
         </button>
