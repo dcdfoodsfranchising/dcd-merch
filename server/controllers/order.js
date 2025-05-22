@@ -134,7 +134,7 @@ module.exports.getOrders = async (req, res) => {
                     name: item.productId.name,
                     description: item.productId.description,
                     price: item.productId.price,
-                    iamges: item.productId.images,
+                    images: item.productId.images,
                     quantity: item.quantity,
                     subtotal: item.subtotal
                 }))
