@@ -6,6 +6,8 @@ const { verify, verifyUser, verifyAdmin } = require("../middlewares/auth");
 // Route for user checkout
 router.post('/checkout', verify, verifyUser, orderController.createOrder);
 
+router.post('/buy-now', verify, verifyUser, orderController.createDirectOrder);
+
 // Route for user to get their orders
 router.get('/my-orders', verify, verifyUser, orderController.getOrders);
 

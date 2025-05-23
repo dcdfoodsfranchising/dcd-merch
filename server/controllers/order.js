@@ -106,6 +106,57 @@ module.exports.createOrder = async (req, res) => {
     }
 };
 
+// Add this to your order.js controller
+module.exports.createDirectOrder = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { productId, color, size, quantity, deliveryDetails } = req.body;
+
+        const product = await Product.findById(productId);
+        if (!product) {
+            return res.status(404).json({ error: "Product not found" });
+        }
+
+        // Find the variant by color and size
+        const variant = product.variants.find(
+            v => v.color === color && v.size === size
+        );
+        if (!variant) {
+            return res.status(400).json({ error: `Variant with color '${color}' and size '${size}' not found for ${product.name}` });
+        }
+        if (variant.quantity < quantity) {
+            return res.status(400).json({ error: `Not enough stock for ${product.name} - ${variant.color} / ${variant.size}` });
+        }
+        variant.quantity -= quantity;
+        await product.save();
+
+        const subtotal = variant.price * quantity;
+
+        const order = new Order({
+            userId,
+            productsOrdered: [{
+                productId: product._id,
+                quantity,
+                subtotal,
+                color,
+                size
+            }],
+            totalPrice: subtotal,
+            status: "Pending",
+            deliveryDetails
+        });
+
+        await order.save();
+
+        res.status(201).json({
+            message: "Order placed successfully",
+            order
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+};
+
 
 module.exports.getOrders = async (req, res) => {
     try {
