@@ -148,9 +148,16 @@ module.exports.createDirectOrder = async (req, res) => {
 
         await order.save();
 
+        // Populate product details for the response
+        const fullOrder = await Order.findById(order._id)
+            .populate({
+                path: "productsOrdered.productId",
+                select: "name price images description"
+            });
+
         res.status(201).json({
             message: "Order placed successfully",
-            order
+            order: fullOrder
         });
     } catch (error) {
         res.status(500).json({ message: "Internal Server Error", error: error.message });
