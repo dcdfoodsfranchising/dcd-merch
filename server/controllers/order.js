@@ -180,6 +180,7 @@ module.exports.createDirectOrder = async (req, res) => {
             order: fullOrder
         });
     } catch (error) {
+        console.error("createDirectOrder error:", error); // <--- Add this line
         res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 };

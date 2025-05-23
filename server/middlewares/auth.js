@@ -15,7 +15,6 @@ module.exports.createAccessToken = (user) => {
 
 // Token verification middleware
 module.exports.verify = (req, res, next) => {
-    console.log("Authorization Header:", req.headers.authorization);
 
     let token = req.headers.authorization?.split(" ")[1]; // Extract Bearer token
 
@@ -28,8 +27,6 @@ module.exports.verify = (req, res, next) => {
             console.error("Token Verification Error:", err.message);
             return res.status(401).send({ auth: "Failed", message: "Invalid token" });
         }
-
-        console.log("Decoded Token:", decodedToken);
         req.user = decodedToken;
         next();
     });
@@ -46,7 +43,6 @@ module.exports.isLoggedIn = (req, res, next) => {
 
 // Middleware to verify if user is an admin
 module.exports.verifyAdmin = (req, res, next) => {
-    console.log("Result from verifyAdmin:", req.user);
 
     if (req.user && req.user.isAdmin) {
         next();
