@@ -117,30 +117,50 @@ module.exports.createDirectOrder = async (req, res) => {
             return res.status(404).json({ error: "Product not found" });
         }
 
-        // Find the variant by color and size
-        const variant = product.variants.find(
-            v => v.color === color && v.size === size
-        );
-        if (!variant) {
-            return res.status(400).json({ error: `Variant with color '${color}' and size '${size}' not found for ${product.name}` });
-        }
-        if (variant.quantity < quantity) {
-            return res.status(400).json({ error: `Not enough stock for ${product.name} - ${variant.color} / ${variant.size}` });
-        }
-        variant.quantity -= quantity;
-        await product.save();
+        let subtotal = 0;
+        let orderedProduct = {
+            productId: product._id,
+            quantity,
+        };
 
-        const subtotal = variant.price * quantity;
+        // Only look for variant if color and size are provided and product has variants
+        if (
+            product.variants &&
+            product.variants.length > 0 &&
+            color &&
+            size
+        ) {
+            const variant = product.variants.find(
+                v => v.color === color && v.size === size
+            );
+            if (!variant) {
+                return res.status(400).json({ error: `Variant with color '${color}' and size '${size}' not found for ${product.name}` });
+            }
+            if (variant.quantity < quantity) {
+                return res.status(400).json({ error: `Not enough stock for ${product.name} - ${variant.color} / ${variant.size}` });
+            }
+            variant.quantity -= quantity;
+            await product.save();
+
+            subtotal = variant.price * quantity;
+            orderedProduct.color = color;
+            orderedProduct.size = size;
+            orderedProduct.subtotal = subtotal;
+        } else {
+            // No variants or no color/size: use product price and update stock if you track it
+            if (product.quantity < quantity) {
+                return res.status(400).json({ error: `Not enough stock for ${product.name}` });
+            }
+            product.quantity -= quantity;
+            await product.save();
+
+            subtotal = product.price * quantity;
+            orderedProduct.subtotal = subtotal;
+        }
 
         const order = new Order({
             userId,
-            productsOrdered: [{
-                productId: product._id,
-                quantity,
-                subtotal,
-                color,
-                size
-            }],
+            productsOrdered: [orderedProduct],
             totalPrice: subtotal,
             status: "Pending",
             deliveryDetails
