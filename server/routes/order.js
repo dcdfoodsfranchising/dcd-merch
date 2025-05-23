@@ -8,6 +8,8 @@ router.post('/checkout', verify, verifyUser, orderController.createOrder);
 
 router.post('/buy-now', verify, verifyUser, orderController.createDirectOrder);
 
+router.post('/buy-again', verify, verifyUser, orderController.buyAgainOrder);
+
 // Route for user to get their orders
 router.get('/my-orders', verify, verifyUser, orderController.getOrders);
 

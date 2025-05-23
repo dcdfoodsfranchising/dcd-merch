@@ -185,6 +185,83 @@ module.exports.createDirectOrder = async (req, res) => {
     }
 };
 
+module.exports.buyAgainOrder = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { productId, color, size, quantity, price, deliveryDetails } = req.body;
+
+        const product = await Product.findById(productId);
+        if (!product) {
+            return res.status(404).json({ error: "Product not found" });
+        }
+
+        let subtotal = 0;
+        let orderedProduct = {
+            productId: product._id,
+            quantity,
+        };
+
+        // If product has variants, require color and size
+        if (product.variants && product.variants.length > 0) {
+            if (!color || !size) {
+                return res.status(400).json({ error: "This product requires color and size to order." });
+            }
+            const variant = product.variants.find(
+                v => v.color === color && v.size === size
+            );
+            if (!variant) {
+                return res.status(400).json({ error: `Variant with color '${color}' and size '${size}' not found for ${product.name}` });
+            }
+            if (variant.quantity < quantity) {
+                return res.status(400).json({ error: `Not enough stock for ${product.name} - ${variant.color} / ${variant.size}` });
+            }
+            variant.quantity -= quantity;
+            await product.save();
+
+            subtotal = (price || variant.price) * quantity; // Use original price if provided, else current
+            orderedProduct.color = color;
+            orderedProduct.size = size;
+            orderedProduct.price = price || variant.price;
+            orderedProduct.subtotal = subtotal;
+        } else {
+            // No variants
+            if (product.quantity < quantity) {
+                return res.status(400).json({ error: `Not enough stock for ${product.name}` });
+            }
+            product.quantity -= quantity;
+            await product.save();
+
+            subtotal = (price || product.price) * quantity; // Use original price if provided, else current
+            orderedProduct.price = price || product.price;
+            orderedProduct.subtotal = subtotal;
+        }
+
+        const order = new Order({
+            userId,
+            productsOrdered: [orderedProduct],
+            totalPrice: subtotal,
+            status: "Pending",
+            deliveryDetails
+        });
+
+        await order.save();
+
+        const fullOrder = await Order.findById(order._id)
+            .populate({
+                path: "productsOrdered.productId",
+                select: "name price images description"
+            });
+
+        res.status(201).json({
+            message: "Buy Again order placed successfully",
+            order: fullOrder
+        });
+    } catch (error) {
+        console.error("buyAgainOrder error:", error);
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+};
+
 
 module.exports.getOrders = async (req, res) => {
     try {
