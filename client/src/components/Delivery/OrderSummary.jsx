@@ -17,13 +17,7 @@ const OrderSummary = ({
           .reduce(
             (sum, item) =>
               sum +
-              (
-                item.variant?.price ??
-                item.product?.price ??
-                item.price ??
-                item.productId?.price ??
-                0
-              ) * item.quantity,
+              ((item.variant?.price ?? item.productId?.price ?? 0) * item.quantity),
             0
           )
           .toLocaleString(undefined, { minimumFractionDigits: 2 })
@@ -50,34 +44,44 @@ const OrderSummary = ({
         {items.length === 0 && (
           <li className="text-gray-400 text-sm">No items in cart.</li>
         )}
-        {items.map((item, idx) => {
-          console.log("OrderSummary item:", item);
-          // For Buy Now, product info is in item.product or item.productId (populated)
-          const product = item.product || item.productId || item;
-          const price =
-            item.variant?.price ??
-            item.product?.price ??
-            item.price ??
-            0;
+        {items.map((item) => {
+          const image =
+            (item.productId?.images && item.productId.images[0]) ||
+            (item.images && item.images[0]) ||
+            item.productId?.image ||
+            item.image;
+
           return (
-            <div key={idx} className="flex items-center mb-3">
-              <img
-                src={product.images?.[0] || item.images?.[0]}
-                alt={product.name || item.name}
-                className="w-14 h-14 object-contain rounded mr-3"
-              />
-              <div className="flex-1">
-                <div className="font-medium">{product.name || item.name}</div>
-                <div className="text-xs text-gray-500">
-                  {item.color && <span>{item.color} </span>}
-                  {item.size && <span>{item.size}</span>}
+            <li key={item._id || item.id} className="flex justify-between items-center text-sm pb-3">
+              <div className="flex items-center gap-3">
+                {image ? (
+                  <img
+                    src={image}
+                    alt={item.productId?.name || item.name}
+                    className="w-12 h-12 object-cover rounded"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs">
+                    No Image
+                  </div>
+                )}
+                <div>
+                  <div>
+                    {item.productId?.name || item.name}
+                    {item.variant?.name && (
+                      <span className="text-xs text-gray-500"> ({item.variant.name})</span>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-500">x{item.quantity}</div>
                 </div>
-                <div className="text-xs text-gray-500">Qty: {item.quantity}</div>
               </div>
-              <div className="text-sm text-gray-700 font-semibold min-w-[80px] text-right">
-                ₱{Number(price).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-              </div>
-            </div>
+              <span className="font-semibold text-slate-900 ml-4">
+                ₱
+                {Number(
+                  (item.variant?.price ?? item.productId?.price ?? 0) * item.quantity
+                ).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </span>
+            </li>
           );
         })}
       </ul>

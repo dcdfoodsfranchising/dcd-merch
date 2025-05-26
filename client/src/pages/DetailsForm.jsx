@@ -5,10 +5,9 @@ import DeliveryForm from '../components/Delivery/DeliveryForm';
 import OrderSummary from '../components/Delivery/OrderSummary';
 import { useNavigate } from 'react-router-dom';
 import NavbarLogo from '../components/NavbarLogo';
-import { createOrder, createDirectOrder } from '../services/orderService'; // Update import
+import { createOrder } from '../services/orderService';
 import Lottie from 'lottie-react';
 import successAnim from '../assets/icons/success.json';
-import { getProductById } from '../services/productService';
 
 const initialForm = {
   firstName: '',
@@ -28,7 +27,6 @@ const DeliveryDetails = () => {
   const [cartItems, setCartItems] = useState([]);
   const [cartTotal, setCartTotal] = useState('₱0.00');
   const [showSuccess, setShowSuccess] = useState(false);
-  const [buyNowItem, setBuyNowItem] = useState(null);
   const navigate = useNavigate();
 
   // Auto-fill form with saved address if available
@@ -44,80 +42,28 @@ const DeliveryDetails = () => {
     fetchDetails();
   }, []);
 
-  // Fetch cart items and total, and ensure product price is available for Buy Now
+  // Fetch cart items and total
   useEffect(() => {
-    const buyNowDetails = localStorage.getItem('buyNowDetails');
-    if (buyNowDetails) {
-      const parsed = JSON.parse(buyNowDetails);
-
-      // If price is present (from order history), use it directly
-      if (parsed.price) {
-        const itemWithProduct = {
-          ...parsed,
-          // fallback for name/images if not present
-          name: parsed.name,
-          images: parsed.images,
-        };
-        setBuyNowItem(itemWithProduct);
-        setCartItems([itemWithProduct]);
-        setCartTotal(
-          parsed.price
-            ? `₱${Number(parsed.price * parsed.quantity).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
-            : '₱0.00'
-        );
-        return;
-      }
-
-      // Otherwise, fetch latest product info (for Buy Now from product page)
-      getProductById(parsed.productId).then(product => {
-        let price = product.price;
-        if (product.variants && product.variants.length > 0) {
-          const variant = product.variants.find(
-            v => v.color === parsed.color && v.size === parsed.size
+    const fetchCart = async () => {
+      try {
+        const data = await getCartItems();
+        if (data?.cart && Array.isArray(data.cart.cartItems)) {
+          setCartItems(data.cart.cartItems);
+          setCartTotal(
+            data.cart.totalPrice !== undefined
+              ? `₱${Number(data.cart.totalPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+              : '₱0.00'
           );
-          price = variant?.price ?? product.price;
-        }
-        const itemWithProduct = {
-          ...parsed,
-          product: { ...product, price },
-          price,
-          name: product.name,
-          images: product.images,
-          quantity: parsed.quantity,
-          color: parsed.color,
-          size: parsed.size,
-        };
-        setBuyNowItem(itemWithProduct);
-        setCartItems([itemWithProduct]);
-        setCartTotal(
-          price
-            ? `₱${Number(price * parsed.quantity).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
-            : '₱0.00'
-        );
-      });
-    } else {
-      // Fallback to cart items
-      const fetchCart = async () => {
-        try {
-          const data = await getCartItems();
-          if (data?.cart && Array.isArray(data.cart.cartItems)) {
-            setCartItems(data.cart.cartItems);
-            setCartTotal(
-              data.cart.totalPrice !== undefined
-                ? `₱${Number(data.cart.totalPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
-                : '₱0.00'
-            );
-          } else {
-            setCartItems([]);
-            setCartTotal('₱0.00');
-          }
-        } catch {
+        } else {
           setCartItems([]);
           setCartTotal('₱0.00');
         }
-      };
-      fetchCart();
-    }
+      } catch {
+        setCartItems([]);
+        setCartTotal('₱0.00');
+      }
+    };
+    fetchCart();
   }, []);
 
   const validateForm = (data) => {
@@ -168,31 +114,12 @@ const DeliveryDetails = () => {
     const errors = validateForm(formData);
     setFormErrors(errors);
     if (Object.keys(errors).length > 0) return;
-
-    if (buyNowItem) {
-      // Buy Now flow
-      const payload = {
-        productId: buyNowItem.productId,
-        quantity: buyNowItem.quantity,
-        deliveryDetails: formData
-      };
-      if (buyNowItem.color && buyNowItem.color !== "") payload.color = buyNowItem.color;
-      if (buyNowItem.size && buyNowItem.size !== "") payload.size = buyNowItem.size;
-
-      console.log("Payload sent to /orders/buy-now:", payload); // <--- Add this line
-
-      await createDirectOrder(payload);
-      localStorage.removeItem('buyNowDetails');
-    } else {
-      // Cart checkout flow
-      await createOrder(formData);
-    }
-
+    await createOrder(formData);
     setShowSuccess(true);
     setTimeout(() => {
       setShowSuccess(false);
       navigate('/order-confirmation');
-    }, 1800);
+    }, 1800); // Show animation for 1.8s then redirect
   };
 
   const handleOrderError = (error) => {

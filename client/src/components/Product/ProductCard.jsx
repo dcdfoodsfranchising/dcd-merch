@@ -35,13 +35,8 @@ const ProductCard = ({ product }) => {
         let count = 0;
 
         allOrders.forEach((order) => {
-          (order.items || order.productsOrdered || []).forEach((item) => {
-            // Support both string and object for productId
-            const id =
-              typeof item.productId === "object"
-                ? item.productId._id
-                : item.productId;
-            if (id === product._id) {
+          order.items.forEach((item) => {
+            if (item.productId === product._id) {
               count += item.quantity;
             }
           });
@@ -57,32 +52,23 @@ const ProductCard = ({ product }) => {
   }, [product._id]);
 
   return (
-    <div className="w-full">
-      <div
-        onClick={handleClick}
-        className="relative w-full aspect-[4/5] overflow-hidden shadow-md cursor-pointer group"
-        style={{ minHeight: 0 }}
-      >
-        <img
-          src={
-            product.images?.length > 0
-              ? product.images[0]
-              : "https://via.placeholder.com/300x375?text=No+Image"
-          }
-          alt={product.name}
-          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-        />
-        {/* Optional overlay for hover effect */}
-        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition duration-200" />
-      </div>
-      <div className="pt-2 px-1">
-        <h2 className="text-sm font-semibold text-slate-900 truncate">
-          {product.name}
-        </h2>
-        <div className="flex justify-between items-center mt-1">
-          <p className="text-red-600 font-bold text-sm">{getLowestPrice()}</p>
-          <p className="text-xs text-gray-500">{soldCount} sold</p>
-        </div>
+    <div
+      onClick={handleClick}
+      className="border rounded-lg p-4 shadow-md cursor-pointer hover:shadow-lg transition duration-200"
+    >
+      <img
+        src={
+          product.images?.length > 0
+            ? product.images[0]
+            : "https://via.placeholder.com/150"
+        }
+        alt={product.name}
+        className="w-full h-40 object-cover rounded-md"
+      />
+      <h2 className="text-lg font-semibold mt-2">{product.name}</h2>
+      <div className="flex justify-between items-center mt-1">
+        <p className="text-gray-600 font-bold">{getLowestPrice()}</p>
+        <p className="text-sm text-gray-500">{soldCount} sold</p>
       </div>
     </div>
   );

@@ -6,7 +6,6 @@ import Lottie from 'lottie-react';
 import successAnimation from '../assets/icons/success.json';
 import QuantitySelector from '../components/Product/QuantitySelector';
 import { updateProductQuantity } from '../services/productService';
-import { createDirectOrder } from '../services/orderService'; // Add this import
 
 // Lazy load subcomponents
 const ProductImages = lazy(() => import('../components/Product/ProductImages'));
@@ -145,33 +144,6 @@ const ProductView = () => {
     }
   };
 
-  // Add this handler for Buy Now
-  const handleBuyNow = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      toast.info('Please login or register first to buy now.');
-      return;
-    }
-    if (product.variants && product.variants.length > 0 && !selectedVariant) {
-      toast.info('Please select a valid variant (size/color) before buying.');
-      return;
-    }
-    try {
-      // Save buy now details to localStorage or state for /delivery page
-      const buyNowDetails = {
-        productId: product._id,
-        color: selectedVariant ? selectedVariant.color : null,
-        size: selectedVariant ? selectedVariant.size : null,
-        quantity,
-        product // Optionally pass product info for summary
-      };
-      localStorage.setItem('buyNowDetails', JSON.stringify(buyNowDetails));
-      navigate('/delivery?mode=buy-now');
-    } catch (error) {
-      toast.error('Failed to proceed to checkout.');
-    }
-  };
-
   if (!product) {
     return <p className="text-center mt-5">Loading product details...</p>;
   }
@@ -271,25 +243,16 @@ const ProductView = () => {
               <div className="mt-6 flex flex-wrap gap-4">
                 <button
                   type="button"
-                  onClick={handleBuyNow}
-                  className={`px-4 py-3 w-[45%] text-sm font-medium ${
-                    availableQuantity > 0 && !requiresVariantSelection && localStorage.getItem('token')
-                      ? 'border border-red-600 bg-red-600 hover:bg-red-700 text-white'
-                      : 'border border-slate-400 bg-slate-300 text-slate-500 cursor-not-allowed'
-                  }`}
-                  disabled={
-                    availableQuantity === 0 ||
-                    requiresVariantSelection
-                  }
+                  className="px-4 py-3 w-[45%] border border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-900 text-sm font-medium"
                 >
-                  Buy Now
+                  Add to wishlist
                 </button>
                 <button
                   type="button"
                   onClick={handleAddToCart}
                   className={`px-4 py-3 w-[45%] text-sm font-medium ${
                     availableQuantity > 0 && !requiresVariantSelection && localStorage.getItem('token')
-                      ? 'border border-red-600 bg-white hover:bg-red-50 text-red-600'
+                      ? 'border border-red-600 bg-red-600 hover:bg-red-700 text-white'
                       : 'border border-slate-400 bg-slate-300 text-slate-500 cursor-not-allowed'
                   }`}
                   disabled={

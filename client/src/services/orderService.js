@@ -55,37 +55,11 @@ export const createOrder = async (deliveryDetails) => {
     }
 };
 
-
-export const createDirectOrder = async ({
-    productId,
-    color,
-    size,
-    quantity,
-    deliveryDetails
-}) => {
-    try {
-        const response = await axios.post(
-            `${API_BASE_URL}/orders/buy-now`,
-            {
-                productId,
-                color,
-                size,
-                quantity,
-                deliveryDetails
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`
-                }
-            }
-        );
-        return response.data; // Return created order
-    } catch (error) {
-        console.error("Error creating direct order:", error);
-        throw error.response ? error.response.data : new Error("Failed to create direct order");
-    }
-};
-
+/**
+ * Update order status (Admin)
+ * @param {string} orderId - The ID of the order to update.
+ * @param {string} newStatus - The new status of the order.
+ */
 export const updateOrderStatus = async (orderId, newStatus) => {
     try {
         const response = await axios.patch(`${API_BASE_URL}/orders/update-status`, 
@@ -110,43 +84,14 @@ export const updateOrderStatus = async (orderId, newStatus) => {
  */
 export const cancelOrder = async (orderId) => {
     try {
-        const response = await axios.patch(
-            `${API_BASE_URL}/orders/${orderId}/cancel`,
-            {},
-            {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`
-                }
+        const response = await axios.patch(`${API_BASE_URL}/orders/cancel/${orderId}`, {}, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`
             }
-        );
+        });
         return response.data; // Return canceled order
     } catch (error) {
         console.error("Error canceling order:", error);
         throw error.response ? error.response.data : new Error("Failed to cancel order");
     }
-};
-
-export const buyAgainOrder = async (payload) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/orders/buy-again`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // Add auth token if needed:
-        // Authorization: `Bearer ${yourAuthToken}`,
-      },
-      body: JSON.stringify(payload),
-      credentials: "include", // if you use cookies for auth
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to place Buy Again order");
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Error creating Buy Again order:", error);
-    throw error;
-  }
 };
