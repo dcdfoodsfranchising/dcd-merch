@@ -42,16 +42,50 @@ export const getUserOrders = async () => {
  * Create a new order from the cart
  */
 export const createOrder = async (deliveryDetails) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/orders/checkout`,
+      { deliveryDetails }, // <-- wrap in an object!
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error creating order:", error);
+    throw error.response ? error.response.data : new Error("Failed to create order");
+  }
+};
+
+export const createDirectOrder = async ({
+    productId,
+    color,
+    size,
+    quantity,
+    deliveryDetails
+}) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/orders/checkout`, { deliveryDetails }, {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`
+        const response = await axios.post(
+            `${API_BASE_URL}/orders/buy-now`,
+            {
+                productId,
+                color,
+                size,
+                quantity,
+                deliveryDetails
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`
+                }
             }
-        });
+        );
         return response.data; // Return created order
     } catch (error) {
-        console.error("Error creating order:", error);
-        throw error.response ? error.response.data : new Error("Failed to create order");
+        console.error("Error creating direct order:", error);
+        throw error.response ? error.response.data : new Error("Failed to create direct order");
     }
 };
 

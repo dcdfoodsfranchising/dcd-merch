@@ -30,6 +30,8 @@ export default function CartModal({ isOpen, onClose }) {
       if (data?.cart && Array.isArray(data.cart.cartItems)) {
         const itemsWithSubtotal = data.cart.cartItems.map((item) => ({
           ...item,
+          color: item.variant?.color,
+          size: item.variant?.size,
           subtotal: (item.variant?.price ?? item.productId.price) * item.quantity,
         }));
         setCartItems(itemsWithSubtotal);
@@ -95,6 +97,7 @@ export default function CartModal({ isOpen, onClose }) {
   };
 
   const handleCheckout = () => {
+    localStorage.removeItem('buyNowDetails'); // <-- Add this line
     navigate('/delivery');
   };
 
