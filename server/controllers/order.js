@@ -38,10 +38,19 @@ module.exports.createOrder = async (req, res) => {
                 return res.status(404).json({ error: `Product not found: ${item.productId._id}` });
             }
 
-            // Find matching variant
-            const variant = product.variants.find(v => v.name === item.variantName);
-            if (!variant) {
-                return res.status(400).json({ error: `Variant '${item.variantName}' not found for ${product.name}` });
+            // Find matching variant (by color and size if present)
+            let variant;
+            if (item.color && item.size) {
+                variant = product.variants.find(v => v.color === item.color && v.size === item.size);
+            } else if (item.variantName) {
+                variant = product.variants.find(v => v.name === item.variantName);
+            } else {
+                // If no variant info, treat as no variant product
+                variant = undefined;
+            }
+
+            if (product.variants.length > 0 && !variant) {
+                return res.status(400).json({ error: `Matching variant not found for ${product.name}` });
             }
             if (variant.quantity < item.quantity) {
                 return res.status(400).json({
