@@ -20,7 +20,7 @@ const variantSchema = new mongoose.Schema({
   }
 }, { _id: false });
 
-// Optional: Custom validation to ensure at least size or color is defined
+// Custom validation to ensure at least size or color is defined
 variantSchema.pre('validate', function (next) {
   if (!this.size && !this.color) {
     next(new Error('At least size or color must be specified for a variant.'));
