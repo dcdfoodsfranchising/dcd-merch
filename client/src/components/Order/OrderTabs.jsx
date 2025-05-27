@@ -9,11 +9,11 @@ const TABS = [
 ];
 
 const OrderTabs = ({ activeTab, setActiveTab }) => (
-  <div className="flex gap-0 mb-6 border-b border-gray-200 bg-white rounded-t-lg overflow-hidden">
+  <div className="flex gap-0 mb-6 border-b border-gray-200 bg-white rounded-t-lg overflow-hidden relative">
     {TABS.map((tab) => (
       <button
         key={tab.value}
-        className={`flex-1 px-4 py-2 text-sm font-semibold transition border-none bg-transparent relative
+        className={`flex-1 px-4 py-2 text-sm font-semibold transition-colors duration-200 border-none bg-transparent relative
           ${activeTab === tab.value ? "text-red-600" : "text-black"}
         `}
         style={{
@@ -24,6 +24,12 @@ const OrderTabs = ({ activeTab, setActiveTab }) => (
         onClick={() => setActiveTab(tab.value)}
       >
         {tab.label}
+        {activeTab === tab.value && (
+          <span
+            className="absolute left-0 bottom-0 w-full h-[3px] bg-red-600 rounded transition-all duration-200"
+            style={{}}
+          />
+        )}
       </button>
     ))}
   </div>

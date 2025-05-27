@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getUserOrders, cancelOrder } from "../services/orderService";
-import { addToCart, buyAgainToCart } from "../services/cartService";
+import { addToCart } from "../services/cartService";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast"; // <-- Add this import
 
@@ -81,10 +81,7 @@ const Order = () => {
           />
           <div className="flex-1">
             <div className="font-medium text-black">{item.name}</div>
-            <div className="text-xs text-gray-500">
-              {item.color && <span>{item.color} </span>}
-              {item.size && <span>{item.size}</span>}
-            </div>
+            {/* Removed color and size display here */}
             <div className="text-xs text-gray-500">Qty: {item.quantity}</div>
           </div>
           <div className="text-sm font-semibold text-black min-w-[80px] text-right">
@@ -141,10 +138,7 @@ const Order = () => {
         />
         <div className="flex-1">
           <div className="font-medium text-black">{item.name}</div>
-          <div className="text-xs text-gray-500">
-            {item.color && <span>{item.color} </span>}
-            {item.size && <span>{item.size}</span>}
-          </div>
+          {/* Removed color and size display */}
           <div className="text-xs text-gray-500">Qty: {item.quantity}</div>
         </div>
         <div className="text-sm font-semibold text-black min-w-[80px] text-right">
@@ -189,31 +183,12 @@ const Order = () => {
     }
   };
 
-  const handleBuyAgain = async (item) => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      toast.info('Please login or register first to add items to your cart.');
-      return;
-    }
-    const productId = item.productId._id || item.productId;
-    const size = item.variant?.size || item.size || null;
-    const color = item.variant?.color || item.color || null;
-    const quantityToAdd = 1;
-    try {
-      await buyAgainToCart(productId, size, color, quantityToAdd);
-      toast.success("Added to cart!");
-    } catch (error) {
-      if (
-        error.response &&
-        (error.response.data?.message?.toLowerCase().includes('invalid token') ||
-          error.response.data?.message?.toLowerCase().includes('jwt'))
-      ) {
-        toast.info('Session expired. Please login again.');
-      } else {
-        toast.error(error.response?.data?.message || 'Failed to add to cart.');
-      }
-    }
+  const handleBuyAgain = (item) => {
+    const productId = item.productId?._id || item.productId;
+    navigate(`/product/${productId}`);
   };
+
+
 
   // Orders to display in the current tab, most recent first
   // Custom sort: Delivered > Pending > Processing > Cancelled, recent first in each group

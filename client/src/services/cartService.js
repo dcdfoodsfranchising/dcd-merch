@@ -90,23 +90,3 @@ export const clearCart = async () => {
         throw error;
     }
 };
-
-
-export const buyAgainToCart = async (productId, size, color, quantity) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axios.post(
-      `${API_BASE_URL}/cart/buy-again`,
-      { productId, size, color, quantity },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Error in buyAgainToCart:', error);
-    throw error;
-  }
-};

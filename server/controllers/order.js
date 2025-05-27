@@ -64,7 +64,7 @@ module.exports.createOrder = async (req, res) => {
 
             // ✅ Emit product update event
             emitProductUpdate(product);
-
+            console.log("DEBUG cart item:", JSON.stringify(item, null, 2));
             productsOrdered.push({
                 productId: product._id,
                 quantity: item.quantity,
