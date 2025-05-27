@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { getUserOrders, cancelOrder } from "../services/orderService";
-import { addToCart } from "../services/cartService";
+import { addToCart, buyAgainToCart } from "../services/cartService";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast"; // <-- Add this import
 
 const TABS = [
   { label: "All", value: "all" },
@@ -177,22 +178,40 @@ const Order = () => {
     navigate(`/rate/${productId}`);
   };
 
-  const handleBuyAgain = async (item) => {
-    try {
-      await addToCart(item.productId, item.size, item.color, 1);
-      alert("Added to cart!");
-    } catch (error) {
-      alert("Failed to add to cart.");
-    }
-  };
-
   const handleCancelOrder = async (orderId) => {
     try {
       await cancelOrder(orderId);
       const data = await getUserOrders();
       setOrders(data || []);
+      toast.success("Order cancelled."); // <-- Use toast
     } catch (error) {
-      alert("Failed to cancel order.");
+      toast.error("Failed to cancel order."); // <-- Use toast
+    }
+  };
+
+  const handleBuyAgain = async (item) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.info('Please login or register first to add items to your cart.');
+      return;
+    }
+    const productId = item.productId._id || item.productId;
+    const size = item.variant?.size || item.size || null;
+    const color = item.variant?.color || item.color || null;
+    const quantityToAdd = 1;
+    try {
+      await buyAgainToCart(productId, size, color, quantityToAdd);
+      toast.success("Added to cart!");
+    } catch (error) {
+      if (
+        error.response &&
+        (error.response.data?.message?.toLowerCase().includes('invalid token') ||
+          error.response.data?.message?.toLowerCase().includes('jwt'))
+      ) {
+        toast.info('Session expired. Please login again.');
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to add to cart.');
+      }
     }
   };
 
@@ -249,14 +268,13 @@ const Order = () => {
           ) : (
             filteredOrders.flatMap((order) => {
               if (order.status?.toLowerCase() === "delivered") {
-                // Render each delivered product as its own card
+                // Render each delivered product as a separate card
                 return order.productsOrdered.map((item, idx) =>
                   renderDeliveredProductCard(order, item, idx)
                 );
-              } else {
-                // Render the whole order as a single card
-                return renderOrderCard(order);
               }
+              // For other statuses, render the whole order as one card
+              return renderOrderCard(order);
             })
           )}
         </>

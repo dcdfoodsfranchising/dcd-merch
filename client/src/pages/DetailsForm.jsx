@@ -48,13 +48,13 @@ const DeliveryDetails = () => {
   useEffect(() => {
     const buyNowDetails = localStorage.getItem('buyNowDetails');
     if (buyNowDetails) {
-      // --- BUY NOW FLOW ---
       const parsed = JSON.parse(buyNowDetails);
 
       // If price is present (from order history), use it directly
       if (parsed.price) {
         const itemWithProduct = {
           ...parsed,
+          // fallback for name/images if not present
           name: parsed.name,
           images: parsed.images,
         };
@@ -96,7 +96,7 @@ const DeliveryDetails = () => {
         );
       });
     } else {
-      // --- CART FLOW ---
+      // Fallback to cart items
       const fetchCart = async () => {
         try {
           const data = await getCartItems();
@@ -169,12 +169,37 @@ const DeliveryDetails = () => {
     setFormErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
+    // Only send the fields needed for delivery
+    const {
+      firstName,
+      lastName,
+      contactNumber,
+      barangay,
+      city,
+      postalCode,
+      completeAddress,
+      tag,
+      notesForRider
+    } = formData;
+
+    const deliveryDetails = {
+      firstName,
+      lastName,
+      contactNumber,
+      barangay,
+      city,
+      postalCode,
+      completeAddress,
+      tag,
+      notesForRider
+    };
+
     if (buyNowItem) {
       // Buy Now flow
       const payload = {
         productId: buyNowItem.productId,
         quantity: buyNowItem.quantity,
-        deliveryDetails: formData
+        deliveryDetails
       };
       if (buyNowItem.color && buyNowItem.color !== "") payload.color = buyNowItem.color;
       if (buyNowItem.size && buyNowItem.size !== "") payload.size = buyNowItem.size;
@@ -185,8 +210,8 @@ const DeliveryDetails = () => {
       localStorage.removeItem('buyNowDetails');
     } else {
       // Cart checkout flow
-      console.log("Delivery details sent to /orders/checkout:", formData);
-      await createOrder(formData); // for cart checkout
+      console.log("Delivery details sent to /orders/checkout:", deliveryDetails);
+      await createOrder(deliveryDetails);
     }
 
     setShowSuccess(true);
@@ -197,8 +222,7 @@ const DeliveryDetails = () => {
   };
 
   const handleOrderError = (error) => {
-    console.error("Order error:", error?.response?.data || error);
-    alert(error?.response?.data?.message || error?.response?.data?.error || "Order failed");
+    // Optionally handle API error
   };
 
   // Handler for Continue Shopping button

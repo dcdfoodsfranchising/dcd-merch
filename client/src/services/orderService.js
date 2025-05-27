@@ -42,10 +42,11 @@ export const getUserOrders = async () => {
  * Create a new order from the cart
  */
 export const createOrder = async (deliveryDetails) => {
+  console.log("Delivery details sent to /orders/checkout:", deliveryDetails);
   try {
     const response = await axios.post(
       `${API_BASE_URL}/orders/checkout`,
-      { deliveryDetails }, // <-- wrap in an object!
+      { deliveryDetails },
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -118,7 +119,7 @@ export const updateOrderStatus = async (orderId, newStatus) => {
  */
 export const cancelOrder = async (orderId) => {
     try {
-        const response = await axios.patch(`${API_BASE_URL}/orders/cancel/${orderId}`, {}, {
+        const response = await axios.patch(`${API_BASE_URL}/orders/${orderId}/cancel`, {}, {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`
             }

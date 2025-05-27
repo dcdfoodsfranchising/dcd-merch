@@ -9,6 +9,7 @@ import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 import SkeletonAppLoader from "./components/SkeletonAppLoader"; // <-- import the skeleton loader
 import OrderConfirmation from "./pages/OrderConfirmation";
+import { Toaster } from 'react-hot-toast';
 
 // Lazy load route components
 const Home = lazy(() => import("./pages/Home"));
@@ -142,6 +143,7 @@ function App() {
   return (
     <GoogleReCaptchaProvider reCaptchaKey={process.env.REACT_APP_RECAPTCHA_SITE_KEY}>
       <UserContext.Provider value={{ user, setUser, unsetUser, cart, setCart, updateUserDetails }}>
+        <Toaster position="top-right" /> {/* <-- Add this line */}
         <Router>
           <UserRedirector />
           <div className="flex">
