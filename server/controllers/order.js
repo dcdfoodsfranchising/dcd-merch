@@ -69,8 +69,8 @@ module.exports.createOrder = async (req, res) => {
                 productId: product._id,
                 quantity: item.quantity,
                 subtotal: item.subtotal,
-                size: item.variant?.size || null,   // <-- Add this
-                color: item.variant?.color || null  // <-- Add this
+                size: item.variant?.size || null,   // <-- Make sure you copy from item.variant
+                color: item.variant?.color || null  // <-- Make sure you copy from item.variant
             });
 
             totalPrice += item.subtotal;
