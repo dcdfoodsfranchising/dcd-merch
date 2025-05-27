@@ -274,43 +274,44 @@ module.exports.buyAgainOrder = async (req, res) => {
 
 
 module.exports.getOrders = async (req, res) => {
-    try {
-        // Fetch orders for the logged-in user and populate product details
-        const orders = await Order.find({ userId: req.user.id }).populate({
-            path: 'productsOrdered.productId',
-            select: 'name description price images',
-            model: 'Product'
-        });
+  try {
+    // Fetch orders for the logged-in user and populate product details
+    const orders = await Order.find({ userId: req.user.id }).populate({
+      path: 'productsOrdered.productId',
+      select: 'name description price images',
+      model: 'Product'
+    });
 
-        // If no orders found, return an empty array
-        if (!orders || orders.length === 0) {
-            return res.status(200).json({ message: 'No orders found', orders: [] });
-        }
-
-        // Return the orders with product details, delivery details, and status
-        res.status(200).json({
-            orders: orders.map(order => ({
-                _id: order._id,
-                orderedOn: order.orderedOn,
-                status: order.status,
-                totalPrice: order.totalPrice,
-                deliveryDetails: order.deliveryDetails, // <-- include delivery details
-                productsOrdered: order.productsOrdered.map(item => ({
-                    productId: item.productId._id,
-                    name: item.productId.name,
-                    description: item.productId.description,
-                    price: item.productId.price,
-                    images: item.productId.images,
-                    quantity: item.quantity,
-                    subtotal: item.subtotal
-                }))
-            }))
-        });
-    } catch (error) {
-        console.error(error); // Log the error for debugging
-        res.status(500).json({ error: error.message });
+    if (!orders || orders.length === 0) {
+      return res.status(200).json({ message: 'No orders found', orders: [] });
     }
+
+    res.status(200).json({
+      orders: orders.map(order => ({
+        _id: order._id,
+        orderedOn: order.orderedOn,
+        status: order.status,
+        totalPrice: order.totalPrice,
+        deliveryDetails: order.deliveryDetails,
+        productsOrdered: order.productsOrdered.map(item => ({
+          productId: item.productId?._id,
+          name: item.productId?.name,
+          description: item.productId?.description,
+          price: item.productId?.price,
+          images: item.productId?.images,
+          quantity: item.quantity,
+          subtotal: item.subtotal,
+          size: item.size || null,
+          color: item.color || null
+        }))
+      }))
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
 };
+
 
 module.exports.getAllOrders = async (req, res) => {
     try {

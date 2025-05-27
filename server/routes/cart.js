@@ -18,6 +18,9 @@ router.patch('/:productId/remove-from-cart', verify, verifyUser, cartController.
 // Clear all products in cart
 router.put('/clear-cart', verify, verifyUser, cartController.clearCart);
 
+// Add this route
+router.post('/buy-again', verify, verifyUser, cartController.buyAgainToCart);
+
 
 
 

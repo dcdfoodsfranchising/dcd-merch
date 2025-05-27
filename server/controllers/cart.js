@@ -276,3 +276,73 @@ module.exports.clearCart = async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error', error });
     }
 };
+
+
+module.exports.buyAgainToCart = async (req, res) => {
+  try {
+    const { productId, size, color, quantity } = req.body;
+    const userId = req.user.id;
+
+    if (typeof quantity !== 'number' || quantity <= 0) {
+      return res.status(400).json({ message: 'Invalid quantity' });
+    }
+
+    // Find or create cart
+    let cart = await Cart.findOne({ userId });
+    if (!cart) {
+      cart = new Cart({ userId, cartItems: [], totalPrice: 0 });
+    }
+
+    // Find the product and variant
+    const product = await Product.findById(productId);
+    if (!product) return res.status(404).json({ message: "Product not found" });
+
+    // Match variant by size and color
+    const variant = product.variants.find(v => v.size === size && v.color === color);
+    if (!variant) return res.status(404).json({ message: "Variant not found" });
+
+    // Build variant name from size and color
+    const variantName = `${size} ${color}`.trim();
+
+    if (quantity > variant.quantity) {
+      return res.status(400).json({ message: 'Requested quantity exceeds available stock' });
+    }
+
+    const subtotal = variant.price * quantity;
+
+    // Check if the item already exists in the cart
+    const itemIndex = cart.cartItems.findIndex(item =>
+      item.productId.toString() === productId &&
+      item.variant.name === variantName
+    );
+
+    if (itemIndex > -1) {
+      cart.cartItems[itemIndex].quantity += quantity;
+      cart.cartItems[itemIndex].subtotal += subtotal;
+    } else {
+      cart.cartItems.push({
+        productId,
+        variant: {
+          name: variantName,
+          size: variant.size,
+          color: variant.color,
+          price: variant.price,
+          quantity: variant.quantity
+        },
+        quantity,
+        subtotal
+      });
+    }
+
+    cart.totalPrice = cart.cartItems.reduce((total, item) => total + item.subtotal, 0);
+
+    await cart.save();
+
+    return res.status(200).json({
+      message: "Product added to cart (Buy Again)!",
+      cart
+    });
+  } catch (err) {
+    return res.status(500).json({ error: "Server error" });
+  }
+};
