@@ -40,12 +40,13 @@ module.exports.createOrder = async (req, res) => {
 
             // Find matching variant (by color and size if present)
             let variant;
-            if (item.color && item.size) {
-                variant = product.variants.find(v => v.color === item.color && v.size === item.size);
-            } else if (item.variantName) {
-                variant = product.variants.find(v => v.name === item.variantName);
+            if (item.variant && item.variant.color && item.variant.size) {
+                variant = product.variants.find(
+                    v => v.color === item.variant.color && v.size === item.variant.size
+                );
+            } else if (item.variant && item.variant.name) {
+                variant = product.variants.find(v => v.name === item.variant.name);
             } else {
-                // If no variant info, treat as no variant product
                 variant = undefined;
             }
 
