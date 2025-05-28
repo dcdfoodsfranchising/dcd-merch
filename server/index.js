@@ -13,6 +13,7 @@ const cartRoutes = require("./routes/cart");
 const wishlistRoutes = require("./routes/wishlist");
 const dashboardRoutes = require("./routes/dashboard");
 const deliveryDetailRoutes = require("./routes/deliveryDetails");
+const reviewRoutes = require("./routes/review"); // ✅ Import review routes
 
 const app = express();
 const server = http.createServer(app);
@@ -43,6 +44,7 @@ app.use("/cart", cartRoutes);
 app.use("/wishlist", wishlistRoutes);
 app.use("/dashboard", dashboardRoutes);
 app.use("/details", deliveryDetailRoutes);
+app.use("/reviews", reviewRoutes);
 
 // Server Initialization
 const PORT = process.env.PORT || 3000;
