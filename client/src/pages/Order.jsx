@@ -3,6 +3,8 @@ import { getUserOrders, cancelOrder } from "../services/orderService";
 import { addToCart } from "../services/cartService";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast"; // <-- Add this import
+import ReviewModal from "../components/Review/ReviewModal";
+import { createReview } from "../services/reviewService";
 
 const TABS = [
   { label: "All", value: "all" },
@@ -16,6 +18,9 @@ const Order = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewProduct, setReviewProduct] = useState(null);
+  const [reviewOrderId, setReviewOrderId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -154,7 +159,7 @@ const Order = () => {
       <div className="flex justify-end mt-4 gap-2">
         <button
           className="min-w-[110px] py-2 px-4 rounded-lg border border-red-600 text-red-600 bg-white text-sm font-semibold shadow-sm transition hover:bg-red-50"
-          onClick={() => handleRate(item.productId)}
+          onClick={() => handleRate(item.productId, order._id)}
         >
           Rate
         </button>
@@ -168,8 +173,10 @@ const Order = () => {
     </div>
   );
 
-  const handleRate = (productId) => {
-    navigate(`/rate/${productId}`);
+  const handleRate = (productId, orderId) => {
+    setReviewProduct(productId);
+    setReviewOrderId(orderId);
+    setReviewModalOpen(true);
   };
 
   const handleCancelOrder = async (orderId) => {
@@ -188,7 +195,27 @@ const Order = () => {
     navigate(`/product/${productId}`);
   };
 
+  const handleOpenReviewModal = (item) => {
+    setReviewProduct(item);
+    setReviewOrderId(item.orderId);
+    setReviewModalOpen(true);
+  };
 
+  const handleCloseReviewModal = () => {
+    setReviewProduct(null);
+    setReviewOrderId(null);
+    setReviewModalOpen(false);
+  };
+
+  const handleReviewSubmit = async (reviewData) => {
+    try {
+      await createReview(reviewData);
+      toast.success("Review submitted!");
+      setReviewModalOpen(false);
+    } catch (error) {
+      toast.error("Failed to submit review.");
+    }
+  };
 
   // Orders to display in the current tab, most recent first
   // Custom sort: Delivered > Pending > Processing > Cancelled, recent first in each group
@@ -253,6 +280,15 @@ const Order = () => {
             })
           )}
         </>
+      )}
+      {reviewModalOpen && reviewProduct && (
+        <ReviewModal
+          open={reviewModalOpen}
+          onClose={() => setReviewModalOpen(false)}
+          onSubmit={handleReviewSubmit}
+          product={reviewProduct}
+          orderId={reviewOrderId}
+        />
       )}
     </div>
   );
