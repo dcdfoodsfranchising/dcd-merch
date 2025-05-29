@@ -13,7 +13,8 @@ export const createReview = async (data) => {
   Object.entries(data).forEach(([key, value]) => {
     if (key === "images" && Array.isArray(value)) {
       value.forEach((img) => formData.append("images", img));
-    } else if (Array.isArray(value)) {
+    } else if (Array.isArray(value) && key !== "images") {
+      // Tags and other arrays as JSON string
       formData.append(key, JSON.stringify(value));
     } else {
       formData.append(key, value);
@@ -27,7 +28,7 @@ export const createReview = async (data) => {
 
 // Get all reviews for a product
 export const getProductReviews = async (productId) => {
-  const res = await axios.get(`${API_URL}/product/${productId}`);
+  const res = await axios.get(`${API_URL}/${productId}`);
   return res.data;
 };
 
@@ -57,7 +58,7 @@ export const editReview = async (reviewId, data) => {
   Object.entries(data).forEach(([key, value]) => {
     if (key === "images" && Array.isArray(value)) {
       value.forEach((img) => formData.append("images", img));
-    } else if (Array.isArray(value)) {
+    } else if (Array.isArray(value) && key !== "images") {
       formData.append(key, JSON.stringify(value));
     } else {
       formData.append(key, value);

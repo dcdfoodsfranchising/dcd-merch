@@ -7,11 +7,13 @@ import successAnimation from '../assets/icons/success.json';
 import QuantitySelector from '../components/Product/QuantitySelector';
 import { updateProductQuantity } from '../services/productService';
 import { createDirectOrder } from '../services/orderService'; // Add this import
+import { getProductReviews } from '../services/reviewService';
+import ProductReviewList from '../components/Review/ProductReviewList';
+import ProductReviewSection from '../components/Review/ProductReviewSection';
 
 // Lazy load subcomponents
 const ProductImages = lazy(() => import('../components/Product/ProductImages'));
 const ProductVariants = lazy(() => import('../components/Product/ProductVariants'));
-const ProductReviews = lazy(() => import('../components/Product/ProductReviews'));
 
 const ProductView = () => {
   const { productId } = useParams();
@@ -23,6 +25,8 @@ const ProductView = () => {
   const [priceRange, setPriceRange] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [productReviews, setProductReviews] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -172,6 +176,15 @@ const ProductView = () => {
     }
   };
 
+  useEffect(() => {
+    if (!productId) return;
+    setReviewsLoading(true);
+    getProductReviews(productId)
+      .then((reviews) => setProductReviews(reviews))
+      .catch(() => setProductReviews([]))
+      .finally(() => setReviewsLoading(false));
+  }, [productId]);
+
   if (!product) {
     return <p className="text-center mt-5">Loading product details...</p>;
   }
@@ -217,7 +230,8 @@ const ProductView = () => {
             {/* Product Info */}
             <div className="w-full">
               <h3 className="text-lg sm:text-xl font-semibold text-slate-900">{product.name}</h3>
-              <div className="flex items-center gap-4 mt-2">
+              {/* Updated: Show reviews and sold below the product name */}
+              <div className="flex items-center gap-4 mt-2 mb-2">
                 <div className="flex items-center">
                   {Array.from({ length: 5 }, (_, index) => (
                     <span
@@ -315,9 +329,7 @@ const ProductView = () => {
                 </div>
               </div>
               <hr className="my-6 border-slate-300" />
-              <Suspense fallback={<div>Loading reviews...</div>}>
-                <ProductReviews reviews={product.reviews} />
-              </Suspense>
+              <ProductReviewSection productId={product._id} />
             </div>
           </div>
         </div>
