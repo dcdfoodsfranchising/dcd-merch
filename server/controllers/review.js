@@ -3,13 +3,16 @@ const Order = require("../Models/Order");
 
 // Create a review
 exports.createReview = async (req, res) => {
+  console.log(req.body, req.files)
   try {
     let { productId, orderId, rating, comment, isAnonymous, tags } = req.body;
     const userId = req.user.id;
     const images = req.files ? req.files.map(file => file.path) : [];
 
     // Parse tags if sent as JSON string
-    if (typeof tags === "string") {
+    if (Array.isArray(tags)) {
+      // tags is already an array (from multiple form fields)
+    } else if (typeof tags === "string") {
       try {
         tags = JSON.parse(tags);
       } catch {
