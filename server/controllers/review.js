@@ -73,16 +73,50 @@ exports.getProductReviews = async (req, res) => {
 exports.voteReview = async (req, res) => {
   try {
     const { reviewId } = req.params;
-    const { helpful } = req.body; // true = helpful, false = not helpful
+    const { vote } = req.body; // vote: "up" or "down"
+    const userId = req.user.id;
 
     const review = await Review.findById(reviewId);
     if (!review) return res.status(404).json({ message: "Review not found." });
 
-    if (helpful) review.helpfulVotes += 1;
-    else review.notHelpfulVotes += 1;
+    // Ensure votes array exists
+    if (!Array.isArray(review.votes)) review.votes = [];
+
+    // Find existing vote by this user
+    const existingVoteIndex = review.votes.findIndex(v => v.userId.toString() === userId);
+
+    let message = "";
+
+    if (existingVoteIndex === -1) {
+      // User hasn't voted yet, add vote
+      review.votes.push({ userId, vote });
+      if (vote === "up") review.helpfulVotes += 1;
+      if (vote === "down") review.notHelpfulVotes += 1;
+      message = "Vote recorded.";
+    } else {
+      const prevVote = review.votes[existingVoteIndex].vote;
+      if (prevVote === vote) {
+        // User clicked same vote again, remove vote (toggle/cancel)
+        review.votes.splice(existingVoteIndex, 1);
+        if (vote === "up") review.helpfulVotes = Math.max(0, review.helpfulVotes - 1);
+        if (vote === "down") review.notHelpfulVotes = Math.max(0, review.notHelpfulVotes - 1);
+        message = "Vote cancelled.";
+      } else {
+        // User switched vote
+        review.votes[existingVoteIndex].vote = vote;
+        if (vote === "up") {
+          review.helpfulVotes += 1;
+          review.notHelpfulVotes = Math.max(0, review.notHelpfulVotes - 1);
+        } else if (vote === "down") {
+          review.notHelpfulVotes += 1;
+          review.helpfulVotes = Math.max(0, review.helpfulVotes - 1);
+        }
+        message = "Vote updated.";
+      }
+    }
 
     await review.save();
-    res.json({ message: "Vote recorded.", review });
+    res.json({ message, review });
   } catch (error) {
     res.status(500).json({ message: "Failed to vote.", error: error.message });
   }
