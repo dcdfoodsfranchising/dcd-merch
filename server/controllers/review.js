@@ -60,10 +60,45 @@ exports.createReview = async (req, res) => {
 // Get all reviews for a product
 exports.getProductReviews = async (req, res) => {
   try {
+    const userId = req.user?.id;
     const reviews = await Review.find({ productId: req.params.productId, hidden: false })
       .populate("userId", "username profilePicture")
       .sort({ createdAt: -1 });
-    res.json(reviews);
+
+    // Deduplicate: keep only the latest review per user/order/product
+    const seen = new Set();
+    const uniqueReviews = [];
+    for (const r of reviews) {
+      const userIdStr = r.userId && typeof r.userId === "object" ? r.userId._id.toString() : r.userId?.toString();
+      const key = `${userIdStr}-${r.orderId}-${r.productId}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueReviews.push(r);
+      }
+    }
+
+    // Add userVote field and mask username if anonymous
+    const reviewsWithUserVote = uniqueReviews.map(r => {
+      let userVote = null;
+      if (userId && r.votes && Array.isArray(r.votes)) {
+        const found = r.votes.find(v => v.userId.toString() === userId);
+        if (found) userVote = found.vote;
+      }
+      const reviewObj = r.toObject();
+      // Mask username if anonymous
+      if (reviewObj.isAnonymous && reviewObj.userId) {
+        reviewObj.userId = {
+          ...reviewObj.userId,
+          username: "Anonymous",
+        };
+      }
+      return {
+        ...reviewObj,
+        userVote,
+      };
+    });
+
+    res.json(reviewsWithUserVote);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch reviews.", error: error.message });
   }

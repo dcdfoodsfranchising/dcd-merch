@@ -3,7 +3,8 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const http = require("http");
 require("dotenv").config();
-const { initializeSocket } = require("./socket"); // ✅ Import WebSocket initializer
+const { initializeSocket } = require("./socket");
+const path = require("path");
 
 // Route Imports
 const userRoutes = require("./routes/user");
@@ -28,6 +29,10 @@ mongoose.connection.once("open", () => console.log("✅ Connected to MongoDB Atl
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ✅ Serve static files
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 app.use(
     cors({
       origin: "http://localhost:3000", // Replace with your frontend's URL
@@ -35,6 +40,8 @@ app.use(
       methods: ["GET", "POST", "PATCH", "PUT", "DELETE"], // Allowed HTTP methods
     })
   );
+
+
 
 // Routes
 app.use("/users", userRoutes);
