@@ -35,7 +35,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://dcd-merch.vercel.app"], // Array of allowed origins
+    origin: "*", // Allow all origins (for development/testing only)
     credentials: true,
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
   })
