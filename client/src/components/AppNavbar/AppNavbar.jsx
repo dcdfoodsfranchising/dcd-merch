@@ -1,14 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import useNavbarLogic from "../../hooks/useNavbarLogic";
-import { useNavigate } from "react-router-dom";
 import MobileMenu from "./MobileMenu";
 import ProfileDropdown from "./ProfileDropdown";
 import ProfileModal from "../Auth/ProfileModal";
 import LogoutModal from "../Auth/LogoutModal";
 import CartModal from "../UserCart/CartModal";
+import { FaShoppingCart, FaUserCircle, FaChevronDown } from "react-icons/fa";
 
 export default function AppNavbar() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isHome = location.pathname === "/";
+
   const {
     user,
     menuOpen,
@@ -25,78 +29,129 @@ export default function AppNavbar() {
   } = useNavbarLogic();
 
   const [cartModalOpen, setCartModalOpen] = useState(false);
-  const [loginModalOpen, setLoginModalOpen] = useState(false); // State for Login Modal
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 80);
+    };
+    window.addEventListener("scroll", handleScroll);
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleProfileClick = () => {
     if (user?.id) {
       if (profileDropdownOpen) {
-        toggleProfileDropdown(false); // Close the dropdown if it's open
+        toggleProfileDropdown(false);
       } else {
-        toggleProfileDropdown(true); // Open the dropdown if it's closed
+        toggleProfileDropdown(true);
       }
     } else {
-      setLoginModalOpen(true); // Open login modal if user is not logged in
+      setLoginModalOpen(true);
     }
   };
 
   const handleCloseDropdown = () => {
-    toggleProfileDropdown(false); // Close the dropdown
+    toggleProfileDropdown(false);
   };
+
+  // Dynamic navbar style
+  const navClass = `fixed w-full top-0 left-0 z-50 transition-colors duration-500
+    ${isHome && !scrolled ? "bg-transparent" : "bg-white shadow-lg border-b border-slate-200"}`;
+
+  // Icon color based on background
+  const iconColor = isHome && !scrolled ? "#e5e7eb" : "#1f2937"; // softer gray when on hero
 
   return (
     <>
-      <nav className="bg-white shadow-sm fixed w-full top-0 left-0 z-50">
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          {/* Logo */}
-          <div className="flex-grow flex justify-center">
-            <a href="/">
-              <img src="/assets/logo/logo.png" alt="Logo" className="w-32 md:w-36 lg:w-40" />
-            </a>
+      <nav className={navClass} >
+        <div className="flex justify-between items-center px-4 py-4 lg:py-8 max-w-6xl mx-auto relative">
+          {/* Centered Logo */}
+          <div className="flex-shrink-0 flex items-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <Link
+              to="/"
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            >
+              <img
+                src={
+                  isHome && !scrolled
+                    ? "/assets/logo/logo-white.png"
+                    : "/assets/logo/logo.png"
+                }
+                alt="Logo"
+                className="w-32 md:w-36 lg:w-48 transition-all duration-300"
+              />
+            </Link>
           </div>
 
-          {/* Burger Menu - Small Screens */}
-          <button className="block md:hidden text-gray-600 hover:text-gray-900" onClick={toggleMenu}>
-            <img src="/assets/icons/burgerMenu.svg" alt="Menu" className="w-8" />
-          </button>
-
-          {/* Desktop Navigation Icons */}
-          <div className="flex items-center space-x-4">
-            {/* Cart Icon */}
-            <button
-              onClick={() => setCartModalOpen(true)}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
-            >
-              <img
-                src="/assets/icons/cart.svg" // Cart icon
-                alt="Cart"
-                className="w-8 h-8"
-              />
-            </button>
-
-            {/* Profile Icon */}
-            <button
-              onClick={handleProfileClick}
-              className="relative flex items-center space-x-2 text-gray-600 hover:text-gray-900"
-            >
-              <img
-                src={user?.profilePicture || "/assets/icons/profile.svg"} // Show user's profile picture or fallback icon
-                alt="Profile"
-                className="w-8 h-8 rounded-full object-cover"
-              />
-              {user?.id && (
-                <div
-                  className={`absolute -bottom-1 -right-2 w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center transform transition-transform duration-200 ${
-                    profileDropdownOpen ? "rotate-180" : "rotate-0"
-                  }`}
-                >
+          {/* Right side: Cart, Profile, and Hamburger */}
+          <div className="flex-1 flex justify-end items-center space-x-4">
+            {/* Hide these on mobile */}
+            <div className="hidden md:flex items-center space-x-4">
+              {/* Cart Icon */}
+              <button
+                onClick={() => setCartModalOpen(true)}
+                className="flex items-center space-x-2"
+                aria-label="Cart"
+              >
+                <FaShoppingCart size={32} color={iconColor} />
+              </button>
+              {/* Profile Icon */}
+              <button
+                onClick={handleProfileClick}
+                className="relative flex items-center space-x-2"
+                aria-label="Profile"
+              >
+                {user?.profilePicture ? (
                   <img
-                    src="/assets/icons/arrow-down.svg" // Arrow icon only shown if user is logged in
-                    alt="Dropdown"
-                    className="w-2.5 h-2.5"
+                    src={user.profilePicture}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full object-cover border"
+                    style={{ borderColor: iconColor }}
                   />
-                </div>
-              )}
-            </button>
+                ) : (
+                  <FaUserCircle size={32} color={iconColor} />
+                )}
+                {user?.id && (
+                  <span
+                    className={`absolute -bottom-1 -right-2 flex items-center justify-center transition-transform duration-200 ${
+                      profileDropdownOpen ? "rotate-180" : "rotate-0"
+                    }`}
+                  >
+                    <FaChevronDown size={20} color={iconColor} />
+                  </span>
+                )}
+              </button>
+            </div>
+            {/* Hamburger menu or Profile icon on mobile */}
+            {!user?.id ? (
+              // Show profile icon if not logged in
+              <button
+                className="md:hidden flex items-center justify-center w-10 h-10 focus:outline-none"
+                onClick={() => setLoginModalOpen(true)}
+                aria-label="Open login"
+              >
+                <FaUserCircle size={32} color={iconColor} />
+              </button>
+            ) : (
+              // Show burger menu if logged in
+              <button
+                className="md:hidden flex flex-col justify-center items-center w-10 h-10 focus:outline-none"
+                onClick={toggleMenu}
+                aria-label="Open menu"
+              >
+                <span
+                  className="block w-7 h-0.5 rounded bg-current mb-2 transition-all duration-300"
+                  style={{ backgroundColor: iconColor }}
+                />
+                <span
+                  className="block w-7 h-0.5 rounded bg-current transition-all duration-300"
+                  style={{ backgroundColor: iconColor }}
+                />
+              </button>
+            )}
           </div>
         </div>
       </nav>
@@ -114,8 +169,8 @@ export default function AppNavbar() {
           onUpdateUsername={(newUsername) => {
             console.log("Updated username:", newUsername);
           }}
-          isLoggedIn={!!user?.id} // Check if the user is logged in
-          onLoginRedirect={() => setLoginModalOpen(true)} // Open login modal if not logged in
+          isLoggedIn={!!user?.id}
+          onLoginRedirect={() => setLoginModalOpen(true)}
         />
       )}
 
@@ -127,7 +182,7 @@ export default function AppNavbar() {
       {/* Modals */}
       {profileModalOpen && <ProfileModal isOpen={profileModalOpen} onClose={closeProfileModal} />}
       {logoutModalOpen && <LogoutModal isOpen={logoutModalOpen} onClose={closeLogoutModal} onConfirm={logout} />}
-      <CartModal isOpen={cartModalOpen} onClose={() => setCartModalOpen(false)} /> {/* Cart Modal */}
+      <CartModal isOpen={cartModalOpen} onClose={() => setCartModalOpen(false)} />
     </>
   );
 }

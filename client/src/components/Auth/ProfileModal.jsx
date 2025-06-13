@@ -13,13 +13,13 @@ export default function ProfileModal({ isOpen, onClose }) {
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-2 right-3 text-gray-600 hover:text-gray-900"
+          className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
         >
           <img src="/assets/icons/close.svg" className="w-8" alt="" />
         </button>
 
-        <div className="pb-7 flex justify-center">
-          <img src="/assets/logo/logo.png" className="w-36" alt="" />
+        <div className="pb-6 flex justify-center"> 
+          <img src="/assets/logo/logo.png" className="w-40" alt="" />
         </div>
 
 

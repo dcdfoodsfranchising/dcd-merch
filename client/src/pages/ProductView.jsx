@@ -7,8 +7,7 @@ import successAnimation from '../assets/icons/success.json';
 import QuantitySelector from '../components/Product/QuantitySelector';
 import { updateProductQuantity } from '../services/productService';
 import { createDirectOrder } from '../services/orderService'; // Add this import
-import { getProductReviews } from '../services/reviewService';
-import ProductReviewList from '../components/Review/ProductReviewList';
+import { getProductReviews, voteReview } from '../services/reviewService';
 import ProductReviewSection from '../components/Review/ProductReviewSection';
 
 // Lazy load subcomponents
@@ -27,6 +26,7 @@ const ProductView = () => {
   const [quantity, setQuantity] = useState(1);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [productReviews, setProductReviews] = useState([]);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -176,13 +176,25 @@ const ProductView = () => {
     }
   };
 
+  const handleVote = async (reviewId, vote, prevVote) => {
+    await voteReview(reviewId, vote, prevVote);
+    // Refresh reviews or update state as needed
+  };
+
+  const fetchReviews = async () => {
+    setReviewsLoading(true);
+    try {
+      const reviews = await getProductReviews(productId);
+      setProductReviews(reviews);
+    } catch {
+      setProductReviews([]);
+    }
+    setReviewsLoading(false);
+  };
+
   useEffect(() => {
     if (!productId) return;
-    setReviewsLoading(true);
-    getProductReviews(productId)
-      .then((reviews) => setProductReviews(reviews))
-      .catch(() => setProductReviews([]))
-      .finally(() => setReviewsLoading(false));
+    fetchReviews();
   }, [productId]);
 
   if (!product) {

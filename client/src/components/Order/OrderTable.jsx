@@ -8,7 +8,7 @@ export default function OrderTable({ orders = [], onUpdateStatus }) {
 
   const handleOpenModal = (order) => {
     setSelectedOrder(order);
-    setNewStatus(order.status || "Pending"); // Set initial status as the current status or "Pending"
+    setNewStatus(order.status || "Pending");
     setOpenModal(true);
   };
 
@@ -20,37 +20,37 @@ export default function OrderTable({ orders = [], onUpdateStatus }) {
 
   const handleStatusChange = () => {
     if (selectedOrder && newStatus) {
-      onUpdateStatus(selectedOrder._id, newStatus); // Update the order status
-      handleCloseModal(); // Close the modal after updating status
+      onUpdateStatus(selectedOrder._id, newStatus);
+      handleCloseModal();
     }
   };
 
   return (
-    <div className="relative overflow-x-auto p-6">
+    <div className="relative overflow-x-auto p-8">
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        <table className="table-auto w-full">
+        <table className="table-auto w-full text-base">
           <thead>
             <tr className="bg-gray-200 text-center">
-              <th className="p-4 text-left">Order ID</th>
-              <th className="p-4 text-left">Date & Time</th>
-              <th className="p-4 text-left">Customer</th>
-              <th className="p-4 text-left">Location</th>
-              <th className="p-4 text-left">Amount</th>
-              <th className="p-4 text-left">Status</th>
-              <th className="p-4 text-center">Actions</th>
+              <th className="p-5 text-left">Order ID</th>
+              <th className="p-5 text-left">Date & Time</th>
+              <th className="p-5 text-left">Customer</th>
+              <th className="p-5 text-left">Location</th>
+              <th className="p-5 text-left">Amount</th>
+              <th className="p-5 text-left">Status</th>
+              <th className="p-5 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
             {orders.length > 0 ? (
               orders.map((order, index) => (
                 <tr key={order._id} className={`text-left ${index % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
-                  <td className="p-4">{order._id || "N/A"}</td>
-                  <td className="p-4">{new Date(order.orderedOn).toLocaleString()}</td>
-                  <td className="p-4">{order.user?.name || "Unknown"}</td>
-                  <td className="p-4">{order.user?.address?.street || "No Address"}</td>
-                  <td className="p-4">₱{order.totalPrice?.toFixed(2) || "0.00"}</td>
+                  <td className="p-5">{order._id || "N/A"}</td>
+                  <td className="p-5">{new Date(order.orderedOn).toLocaleString()}</td>
+                  <td className="p-5">{order.user?.name || "Unknown"}</td>
+                  <td className="p-5">{order.user?.address?.street || "No Address"}</td>
+                  <td className="p-5">₱{order.totalPrice?.toFixed(2) || "0.00"}</td>
                   <td
-                    className={`p-4 font-bold ${
+                    className={`p-5 font-bold ${
                       order.status === "Pending"
                         ? "text-yellow-500"
                         : order.status === "Shipped"
@@ -64,20 +64,19 @@ export default function OrderTable({ orders = [], onUpdateStatus }) {
                   >
                     {order.status || "Unknown"}
                   </td>
-                  <td className="p-4 text-center relative">
-                    {/* Three Dots Button */}
+                  <td className="p-5 text-center relative">
                     <button
                       className="text-gray-600 hover:text-gray-900"
-                      onClick={() => handleOpenModal(order)} // Open modal for this order
+                      onClick={() => handleOpenModal(order)}
                     >
-                      <FiMoreVertical size={20} />
+                      <FiMoreVertical size={22} />
                     </button>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="7" className="p-6 text-center text-gray-500">
+                <td colSpan="7" className="p-8 text-center text-gray-500 text-lg">
                   No orders found.
                 </td>
               </tr>
@@ -88,8 +87,8 @@ export default function OrderTable({ orders = [], onUpdateStatus }) {
 
       {/* Modal for changing order status */}
       {openModal && selectedOrder && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg w-96">
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-8 rounded-lg w-[420px]">
             <h3 className="text-xl font-bold mb-4">Change Status for Order {selectedOrder._id}</h3>
             <div className="mb-4">
               <label htmlFor="status" className="block text-gray-700">Select Status:</label>

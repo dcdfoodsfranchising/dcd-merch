@@ -1,15 +1,10 @@
-import { useState, useEffect, lazy } from "react";
+import { useState, useEffect } from "react";
+import CustomerOrderTrendChart from "../components/Dashboard/charts/CustomerOrderTrendChart";
+import ProductSalesTrendChart from "../components/Dashboard/charts/ProductSalesTrendChart";
+import OrderSummaryChart from "../components/Dashboard/charts/OrderSummaryChart";
+import OrderStatusPieChart from "../components/Dashboard/charts/OrderStatusPieChart";
 import DashboardSummarySection from "../components/Dashboard/DashboardSummarySection";
-import DashboardChartSection from "../components/Dashboard/DashboardChartSection";
 import SkeletonCard from "../components/Dashboard/SkeletonCard";
-
-// Lazy-load chart components
-const LazyChart = lazy(() => import("../components/Dashboard/ChartComponent"));
-const LazyLineChart = lazy(() => import("../components/Dashboard/HourlySalesChart"));
-const LazyBarChart = lazy(() => import("../components/Dashboard/DailySalesChart"));
-const LazyPieChart = lazy(() => import("../components/Dashboard/OrderStatusPieChart"));
-const LazyCustomerTrendChart = lazy(() => import("../components/Dashboard/CustomerTrendChart"));
-const LazyProductTrendChart = lazy(() => import("../components/Dashboard/ProductTrendChart"));
 
 export default function AdminDashboard() {
   const [dashboardData, setDashboardData] = useState({});
@@ -102,7 +97,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <div className="flex flex-wrap gap-4 items-center mt-4 md:mt-0">
@@ -147,39 +142,12 @@ export default function AdminDashboard() {
       {/* Summary Cards */}
       <DashboardSummarySection loading={loading} dashboardData={dashboardData} />
 
-      {/* Customer Trend Chart */}
-      <DashboardChartSection title="Customer Order Trend (Daily)">
-        <LazyCustomerTrendChart data={calculateCustomerTrend()} />
-      </DashboardChartSection>
+      <CustomerOrderTrendChart data={calculateCustomerTrend()} />
+      <ProductSalesTrendChart data={calculateProductTrend()} />
+      <OrderSummaryChart data={dashboardData?.orderSummary || []} />
+      <OrderStatusPieChart data={dashboardData?.orderSummary || []} />
 
-      {/* Product Trend Chart */}
-      <DashboardChartSection title="Product Sales Trend (Daily)">
-        <LazyProductTrendChart data={calculateProductTrend()} />
-      </DashboardChartSection>
-
-      {/* Order Summary Chart */}
-      <DashboardChartSection title="Order Summary">
-        <LazyChart data={dashboardData?.orderSummary || []} />
-      </DashboardChartSection>
-
-      {/* Hourly Sales (Daily) */}
-      {filterType === "daily" && (
-        <DashboardChartSection title="Sales & Orders Per Hour">
-          <LazyLineChart data={dashboardData?.hourlySales || []} />
-        </DashboardChartSection>
-      )}
-
-      {/* Daily Sales (Monthly) */}
-      {filterType === "monthly" && (
-        <DashboardChartSection title="Daily Sales Trend">
-          <LazyBarChart data={dashboardData?.dailySales || []} />
-        </DashboardChartSection>
-      )}
-
-      {/* Order Status Pie */}
-      <DashboardChartSection title="Order Status Breakdown">
-        <LazyPieChart data={dashboardData?.orderSummary || []} />
-      </DashboardChartSection>
+      {/* ...other charts/tables as needed... */}
     </div>
   );
 }

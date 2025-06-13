@@ -39,6 +39,7 @@ export const addToCart = async (productId, size, color, quantity) => {
         throw error;
     }
 };
+
 // Update cart quantity
 export const updateCartQuantity = async (cartItem, quantity) => {
     const token = localStorage.getItem('token');

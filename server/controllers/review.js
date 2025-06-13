@@ -1,13 +1,23 @@
 const Review = require("../Models/Review");
 const Order = require("../Models/Order");
+const cloudinary = require("../config/cloudinary");
 
 // Create a review
 exports.createReview = async (req, res) => {
-  console.log(req.body, req.files)
   try {
     let { productId, orderId, rating, comment, isAnonymous, tags } = req.body;
     const userId = req.user.id;
-    const images = req.files ? req.files.map(file => file.path) : [];
+    let images = [];
+
+    // Upload each file to Cloudinary
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const uploadResult = await cloudinary.uploader.upload(file.path, {
+          folder: "reviews"
+        });
+        images.push(uploadResult.secure_url);
+      }
+    }
 
     // Parse tags if sent as JSON string
     if (Array.isArray(tags)) {
@@ -44,7 +54,7 @@ exports.createReview = async (req, res) => {
       orderId,
       rating,
       comment,
-      images,
+      images, // Now contains Cloudinary URLs
       isVerifiedPurchase: true,
       isAnonymous: !!isAnonymous,
       tags

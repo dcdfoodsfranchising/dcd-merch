@@ -2,10 +2,9 @@ const express = require("express");
 const router = express.Router();
 const reviewController = require("../controllers/review");
 const auth = require("../middlewares/auth");
-const multer = require("multer");
 
-// Configure multer for image upload
-const upload = multer({ dest: "uploads/review-images/" });
+// Use Cloudinary upload middleware
+const upload = require("../middlewares/multer");
 
 // Create review
 router.post(

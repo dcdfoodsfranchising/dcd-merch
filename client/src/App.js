@@ -45,7 +45,7 @@ const MainLayout = () => {
   return (
     <>
       {!user?.isAdmin && <AppNavbar />}
-      <div className="pt-24">
+      <div className="pt-0">
         <Outlet />
       </div>
     </>

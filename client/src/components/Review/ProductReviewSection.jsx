@@ -18,13 +18,12 @@ const ProductReviewSection = ({ productId }) => {
       .finally(() => setLoading(false));
   }, [productId]);
 
-  const handleVote = async (reviewId, helpful) => {
-    try {
-      await voteReview(reviewId, helpful);
-      // Refresh reviews after voting
-      const updated = await getProductReviews(productId);
-      setReviews(updated);
-    } catch {}
+  // After voting, update the review in the reviews array with the backend response
+  const handleVote = async (reviewId, type) => {
+    const { review } = await voteReview(reviewId, type);
+    setReviews((prev) =>
+      prev.map((r) => (r._id === review._id ? review : r))
+    );
   };
 
   // Calculate average rating
@@ -55,14 +54,35 @@ const ProductReviewSection = ({ productId }) => {
           <span className="text-3xl font-bold text-yellow-500">{averageRating}</span>
           <div className="flex flex-col items-start">
             <div className="flex gap-1 mb-1">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <span
-                  key={i}
-                  className={i < Math.round(averageRating) ? "text-yellow-500 text-xl" : "text-gray-300 text-xl"}
-                >
-                  ★
-                </span>
-              ))}
+              {(() => {
+                const avg = parseFloat(averageRating);
+                const fullStars = Math.floor(avg);
+                const hasHalfStar = avg - fullStars >= 0.5;
+                const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+                return (
+                  <>
+                    {[...Array(fullStars)].map((_, i) => (
+                      <span key={`full-${i}`} className="text-yellow-500 text-xl">★</span>
+                    ))}
+                    {hasHalfStar && (
+                      <span key="half" className="text-yellow-500 text-xl">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" className="inline">
+                          <defs>
+                            <linearGradient id="half-grad">
+                              <stop offset="50%" stopColor="currentColor" />
+                              <stop offset="50%" stopColor="#d1d5db" />
+                            </linearGradient>
+                          </defs>
+                          <polygon points="10,1 12.59,6.99 19,7.64 14,12.26 15.18,18.54 10,15.27 4.82,18.54 6,12.26 1,7.64 7.41,6.99" fill="url(#half-grad)" />
+                        </svg>
+                      </span>
+                    )}
+                    {[...Array(emptyStars)].map((_, i) => (
+                      <span key={`empty-${i}`} className="text-gray-300 text-xl">★</span>
+                    ))}
+                  </>
+                );
+              })()}
             </div>
             <span className="text-gray-500 text-sm ml-0">
               ({reviews.length} review{reviews.length !== 1 ? "s" : ""})

@@ -34,14 +34,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(
-    cors({
-      origin: "http://localhost:3000", // Replace with your frontend's URL
-      credentials: true, // Allow cookies and credentials
-      methods: ["GET", "POST", "PATCH", "PUT", "DELETE"], // Allowed HTTP methods
-    })
-  );
-
-
+  cors({
+    origin: ["http://localhost:3000", "https://dcd-merch.vercel.app"], // Array of allowed origins
+    credentials: true,
+    methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
+  })
+);
 
 // Routes
 app.use("/users", userRoutes);

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import io from "socket.io-client";
 import { fetchAllOrders, updateOrderStatus } from "../services/orderService";
 import OrderTable from "../components/Order/OrderTable";
-import moment from "moment";
 
 const socket = io(process.env.REACT_APP_API_BASE_URL);
 
@@ -11,8 +10,6 @@ export default function AdminOrders() {
   const [activeTab, setActiveTab] = useState("All");
   const [pendingCount, setPendingCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [filterType, setFilterType] = useState("day");
-  const [selectedDate, setSelectedDate] = useState(moment().format("YYYY-MM-DD"));
 
   useEffect(() => {
     loadOrders();
@@ -54,35 +51,9 @@ export default function AdminOrders() {
     setPendingCount(pendingOrders.length);
   };
 
-  const handleFilterChange = (event) => {
-    setFilterType(event.target.value);
-    setSelectedDate(moment().format("YYYY-MM-DD"));
-  };
-
-  const handleDateChange = (event) => {
-    setSelectedDate(event.target.value);
-  };
-
-  const filterOrdersByDate = (orders) => {
-    const now = moment();
-    return orders.filter(order => {
-      const orderDate = moment(order.orderedOn);
-      if (filterType === "day") {
-        return orderDate.isSame(moment(selectedDate), "day");
-      }
-      if (filterType === "week") {
-        return orderDate.isSame(now, "week");
-      }
-      if (filterType === "month") {
-        return orderDate.isSame(now, "month");
-      }
-      return true;
-    });
-  };
-
-  const filteredOrders = filterOrdersByDate(
-    activeTab === "All" ? orders : orders.filter(order => order.status === activeTab)
-  );
+  const filteredOrders = activeTab === "All"
+    ? orders
+    : orders.filter(order => order.status === activeTab);
 
   const handleUpdateStatus = async (orderId, newStatus) => {
     try {
@@ -100,29 +71,6 @@ export default function AdminOrders() {
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4">Admin Orders</h1>
-
-      {/* Filter Bar */}
-      <div className="flex justify-between mb-6">
-        <div className="flex space-x-4">
-          <select
-            value={filterType}
-            onChange={handleFilterChange}
-            className="border p-2 rounded-md"
-          >
-            <option value="day">Day</option>
-            <option value="week">Week</option>
-            <option value="month">Month</option>
-          </select>
-          {filterType === "day" && (
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={handleDateChange}
-              className="border p-2 rounded-md"
-            />
-          )}
-        </div>
-      </div>
 
       {/* Tabs for filtering orders */}
       <div className="flex space-x-4 mb-6 border-b">
@@ -146,7 +94,7 @@ export default function AdminOrders() {
 
       {/* Table Container (responsive, scrollable) */}
       <div className="overflow-x-auto p-6 z-[10]">
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
+        <div className=" overflow-hidden">
           {loading ? (
             <div className="flex justify-center items-center h-40">
               <div className="animate-pulse w-full">

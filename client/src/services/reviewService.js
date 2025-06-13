@@ -33,10 +33,11 @@ export const getProductReviews = async (productId) => {
 };
 
 // Vote helpful/not helpful
-export const voteReview = async (reviewId, helpful) => {
+// Only sends vote ("up" or "down")
+export const voteReview = async (reviewId, vote) => {
   const res = await axios.post(
     `${API_URL}/${reviewId}/vote`,
-    { helpful },
+    { vote },
     { headers: getAuthHeaders() }
   );
   return res.data;

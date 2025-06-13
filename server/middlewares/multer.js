@@ -7,9 +7,9 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
     console.log("File being uploaded:", file);
-    console.log("Folder:", req.body.folder || "uploads");
+    console.log("Folder:", req.body.folder || "folder");
 
-    const folder = req.body.folder || "uploads";
+    const folder = req.body.folder || "folder";
     return {
       folder: folder,
       resource_type: "image",
