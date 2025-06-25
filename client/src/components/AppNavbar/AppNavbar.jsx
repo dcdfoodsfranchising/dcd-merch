@@ -58,18 +58,21 @@ export default function AppNavbar() {
   };
 
   // Dynamic navbar style
-  const navClass = `fixed w-full top-0 left-0 z-50 transition-colors duration-500
+  const navClass = `w-full transition-colors duration-500
     ${isHome && !scrolled ? "bg-transparent" : "bg-white shadow-lg border-b border-slate-200"}`;
 
   // Icon color based on background
-  const iconColor = isHome && !scrolled ? "#e5e7eb" : "#1f2937"; // softer gray when on hero
+  const iconColor = isHome && !scrolled ? "#e5e7eb" : "#1f2937";
 
   return (
     <>
-      <nav className={navClass} >
-        <div className="flex justify-between items-center px-4 py-4 lg:py-8 max-w-6xl mx-auto relative">
+      <nav className={navClass}>
+        <div className="flex justify-between items-center px-4 py-4 lg:py-6 max-w-6xl mx-auto">
+          {/* Left side (can be empty or add nav links here) */}
+          <div className="flex-1 flex items-center"></div>
+
           {/* Centered Logo */}
-          <div className="flex-shrink-0 flex items-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="flex-shrink-0 flex items-center">
             <Link
               to="/"
               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
@@ -88,9 +91,7 @@ export default function AppNavbar() {
 
           {/* Right side: Cart, Profile, and Hamburger */}
           <div className="flex-1 flex justify-end items-center space-x-4">
-            {/* Hide these on mobile */}
             <div className="hidden md:flex items-center space-x-4">
-              {/* Cart Icon */}
               <button
                 onClick={() => setCartModalOpen(true)}
                 className="flex items-center space-x-2"
@@ -98,7 +99,6 @@ export default function AppNavbar() {
               >
                 <FaShoppingCart size={32} color={iconColor} />
               </button>
-              {/* Profile Icon */}
               <button
                 onClick={handleProfileClick}
                 className="relative flex items-center space-x-2"
@@ -127,7 +127,6 @@ export default function AppNavbar() {
             </div>
             {/* Hamburger menu or Profile icon on mobile */}
             {!user?.id ? (
-              // Show profile icon if not logged in
               <button
                 className="md:hidden flex items-center justify-center w-10 h-10 focus:outline-none"
                 onClick={() => setLoginModalOpen(true)}
@@ -136,7 +135,6 @@ export default function AppNavbar() {
                 <FaUserCircle size={32} color={iconColor} />
               </button>
             ) : (
-              // Show burger menu if logged in
               <button
                 className="md:hidden flex flex-col justify-center items-center w-10 h-10 focus:outline-none"
                 onClick={toggleMenu}

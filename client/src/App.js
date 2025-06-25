@@ -11,7 +11,7 @@ import SkeletonAppLoader from "./components/SkeletonAppLoader"; // <-- import th
 import OrderConfirmation from "./pages/OrderConfirmation";
 import { Toaster } from 'react-hot-toast';
 
-// Lazy load route components
+// Lazy load Route components
 const Home = lazy(() => import("./pages/Home"));
 const Products = lazy(() => import("./pages/Products"));
 const Register = lazy(() => import("./components/Auth/Register"));
@@ -45,7 +45,7 @@ const MainLayout = () => {
   return (
     <>
       {!user?.isAdmin && <AppNavbar />}
-      <div className="pt-0">
+      <div>
         <Outlet />
       </div>
     </>

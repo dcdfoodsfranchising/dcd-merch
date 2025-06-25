@@ -3,7 +3,7 @@ const router = express.Router();
 const reviewController = require("../controllers/review");
 const auth = require("../middlewares/auth");
 
-// Use Cloudinary upload middleware
+// Use cloudinary upload middleware
 const upload = require("../middlewares/multer");
 
 // Create review
