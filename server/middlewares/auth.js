@@ -1,7 +1,17 @@
+/**
+ * @file auth.js
+ * @description Authentication & Authorization middleware using JWT for Node.js/Express.
+ * Includes token creation, verification, role checks (admin/user), and centralized error handling.
+ */
+
 const jwt = require("jsonwebtoken");
 require('dotenv').config();
 
-// Function to create access token
+/**
+ * Creates a JWT access token for a user.
+ * @param {Object} user - The user object (must include _id, email, isAdmin, and role).
+ * @returns {String} - Signed JWT token with 1-hour expiration.
+ */
 module.exports.createAccessToken = (user) => {
     const data = {
         id: user._id,
@@ -10,13 +20,15 @@ module.exports.createAccessToken = (user) => {
         role: user.role
     };
 
-    return jwt.sign(data, process.env.JWT_SECRET_KEY, { expiresIn: "1h" }); // Added expiration
+    return jwt.sign(data, process.env.JWT_SECRET_KEY, { expiresIn: "1h" });
 };
 
-// Token verification middleware
+/**
+ * Middleware to verify a JWT token.
+ * Adds decoded user payload to `req.user` if valid.
+ */
 module.exports.verify = (req, res, next) => {
-
-    let token = req.headers.authorization?.split(" ")[1]; // Extract Bearer token
+    const token = req.headers.authorization?.split(" ")[1]; // Format: "Bearer <token>"
 
     if (!token) {
         return res.status(401).send({ auth: "Failed", message: "No token provided" });
@@ -27,12 +39,16 @@ module.exports.verify = (req, res, next) => {
             console.error("Token Verification Error:", err.message);
             return res.status(401).send({ auth: "Failed", message: "Invalid token" });
         }
+
         req.user = decodedToken;
         next();
     });
 };
 
-// Middleware to check if user is logged in
+/**
+ * Middleware to check if user is authenticated (token is valid and decoded).
+ * Requires `verify` to run before it in the middleware chain.
+ */
 module.exports.isLoggedIn = (req, res, next) => {
     if (req.user) {
         next();
@@ -41,9 +57,11 @@ module.exports.isLoggedIn = (req, res, next) => {
     }
 };
 
-// Middleware to verify if user is an admin
+/**
+ * Middleware to allow only admins.
+ * Requires decoded token (via `verify`) to contain `isAdmin: true`.
+ */
 module.exports.verifyAdmin = (req, res, next) => {
-
     if (req.user && req.user.isAdmin) {
         next();
     } else {
@@ -51,7 +69,9 @@ module.exports.verifyAdmin = (req, res, next) => {
     }
 };
 
-// Middleware to verify if user is a normal user (not admin)
+/**
+ * Middleware to allow only regular users (non-admin).
+ */
 module.exports.verifyUser = (req, res, next) => {
     console.log("Result from verifyUser:", req.user);
 
@@ -62,7 +82,10 @@ module.exports.verifyUser = (req, res, next) => {
     }
 };
 
-// Central error handler
+/**
+ * Centralized error handler.
+ * Use this as the last middleware in your app to handle thrown or passed errors.
+ */
 module.exports.errorHandler = (err, req, res, next) => {
     console.error("Error Handler:", err);
 
