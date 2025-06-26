@@ -1,4 +1,4 @@
-# 📘 Merch Server – Fullstack Documentation
+# 📘️ Merch Server – Fullstack Documentation
 
 ## 📌 Overview
 
@@ -31,35 +31,52 @@ server/
 
 ```
 client/
-├── public/                 # Static assets, favicon, etc.
-├── src/
-│   ├── assets/             # Images, logo
-│   ├── components/         # Reusable UI components
-│   ├── context/            # Auth and global state
-│   ├── pages/              # Route-based page views
-│   ├── App.js              # Root component
-│   └── main.jsx            # ReactDOM entry
-├── .env                    # Frontend env variables
-├── package.json            # Frontend dependencies
+├── build/                      # Production build output (generated after `npm run build`)
+├── node_modules/              # Node dependencies (auto-generated)
+├── public/                    # Static assets (e.g., index.html, favicon)
+│
+├── src/                       # Main source code
+│   ├── assets/                # Images, icons, fonts, and other static resources
+│   ├── components/            # Reusable React UI components
+│   ├── context/               # React context providers (e.g., AuthContext, CartContext)
+│   ├── hooks/                 # Custom React hooks for shared logic
+│   ├── pages/                 # Main pages used in routing (e.g., Home, Login, Profile)
+│   ├── services/              # API service calls or utility functions (e.g., Axios instances)
+│   ├── App.js                 # Main application component
+│   ├── index.js               # React app entry point
+│   └── index.css              # Global Tailwind and custom CSS
+│
+├── .env.local                 # Local environment variables (not committed)
+├── .gitignore                 # Git ignore rules
+├── package.json               # Project dependencies and scripts
+├── package-lock.json          # Auto-generated dependency tree lock file
+├── postcss.config.js          # PostCSS configuration (used with Tailwind)
+├── tailwind.config.js         # Tailwind CSS configuration
 ```
 
 ---
 
 ## 🛠️ Technologies Used
 
-| Purpose            | Tech Used             |
-| ------------------ | --------------------- |
-| Backend Framework  | Express (Node.js)     |
-| Frontend Framework | React.js              |
-| Database           | MongoDB with Mongoose |
-| Authentication     | JWT, bcryptjs         |
-| Image Upload       | Cloudinary, Multer    |
-| Email              | Nodemailer            |
-| CAPTCHA            | Google reCAPTCHA v3   |
-| Real-time Updates  | Socket.io             |
-| Env Config         | dotenv                |
-| API Testing        | Postman               |
-| Deployment         | Render                |
+| Category           | Technology / Description                   |
+| ------------------ | ------------------------------------------ |
+| Backend Framework  | Express (Node.js)                          |
+| Frontend Framework | React.js (Create React App)                |
+| Database           | MongoDB with Mongoose                      |
+| Authentication     | JWT, bcryptjs                              |
+| Image Upload       | Cloudinary, Multer                         |
+| Email              | Nodemailer                                 |
+| CAPTCHA            | Google reCAPTCHA v3                        |
+| Real-time Updates  | Socket.io                                  |
+| Env Config         | dotenv                                     |
+| API Testing        | Postman                                    |
+| Deployment         | Backend: Render, Frontend: Vercel          |
+| UI Library         | React – JavaScript library for building UI |
+| CSS Framework      | Tailwind CSS – Utility-first CSS framework |
+| CSS Processing     | PostCSS – used with Tailwind               |
+| State Management   | Context API – global state (auth, cart)    |
+| HTTP Client        | Axios – for API calls                      |
+| Syntax Extension   | JSX – React syntax extension               |
 
 ---
 
@@ -76,7 +93,7 @@ cd dcd-merch
 
 ```bash
 npm install     # backend
-yarn install    # frontend (in /client)
+npm install     # frontend (in /client)
 ```
 
 ### 3. Create `.env` Files
@@ -87,7 +104,7 @@ yarn install    # frontend (in /client)
 PORT=3000
 MONGODB_STRING=your_mongodb_connection_string
 JWT_SECRET_KEY=your_jwt_secret
-FRONTEND_URL=http://localhost:5173
+FRONTEND_URL=http://localhost:3000
 CLOUDINARY_NAME=your_cloudinary_name
 CLOUDINARY_API_KEY=your_cloudinary_key
 CLOUDINARY_API_SECRET=your_cloudinary_secret
@@ -97,8 +114,8 @@ CAPTCHA_SECRET_KEY=your_recaptcha_key
 #### Frontend `.env`
 
 ```
-VITE_API_BASE_URL=http://localhost:3000/api
-VITE_RECAPTCHA_SITE_KEY=your_site_key
+REACT_APP_API_BASE_URL=http://localhost:3000/api
+REACT_APP_RECAPTCHA_SITE_KEY=your_site_key
 ```
 
 ### 4. Run Locally
@@ -109,132 +126,161 @@ npm run dev
 
 # Frontend
 cd client
-npm run dev
+npm start
 ```
 
 ---
 
-## 🔬 API Structure Summary
+## 📦 Full API Route Reference
+
+### 🔬 API Structure Summary
 
 | Method | Endpoint                      | Description                 |
 | ------ | ----------------------------- | --------------------------- |
 | POST   | /api/users/register           | Register a new user         |
 | POST   | /api/users/login              | Login with email/password   |
-| GET    | /api/products                 | Fetch all active products   |
+| GET    | /api/products/active          | Fetch all active products   |
 | POST   | /api/cart/add                 | Add product to cart         |
-| POST   | /api/orders                   | Place order from cart       |
-| GET    | /api/orders/user              | Get logged-in user's orders |
+| POST   | /api/orders/checkout          | Place order from cart       |
+| GET    | /api/orders/my-orders         | Get logged-in user's orders |
 | POST   | /api/reviews                  | Submit a product review     |
 | GET    | /api/reviews/\:productId      | Fetch product reviews       |
 | POST   | /api/wishlist/add/\:productId | Add to wishlist             |
 
+### 👤 User Routes
+
+| Method | Endpoint                            | Description                           |
+| ------ | ----------------------------------- | ------------------------------------- |
+| POST   | /api/users/register                 | Register user with email confirmation |
+| POST   | /api/users/confirm-email            | Confirm registration code             |
+| POST   | /api/users/resend-confirmation-code | Resend confirmation email             |
+| POST   | /api/users/login                    | Login with CAPTCHA verification       |
+| POST   | /api/users/verify-login-code        | Verify login code                     |
+| GET    | /api/users/details                  | Get user details                      |
+| PATCH  | /api/users/\:id/set-as-admin        | Promote user to admin                 |
+| PATCH  | /api/users/update-password          | Change password                       |
+| PATCH  | /api/users/update-details           | Update personal details               |
+| PATCH  | /api/users/update-username          | Change display name                   |
+| POST   | /api/users/upload-profile-picture   | Upload profile picture                |
+
+### 🛒 Product Routes
+
+| Method | Endpoint                                  | Description                      |
+| ------ | ----------------------------------------- | -------------------------------- |
+| POST   | /api/products                             | Create product with images       |
+| GET    | /api/products/all                         | Get all products (admin)         |
+| GET    | /api/products/active                      | Get all active products          |
+| GET    | /api/products/\:productId                 | Get single product by ID         |
+| PATCH  | /api/products/\:productId/update          | Update product info              |
+| PATCH  | /api/products/\:productId/archive         | Archive product                  |
+| PATCH  | /api/products/\:productId/activate        | Activate product                 |
+| DELETE | /api/products/\:productId                 | Delete product                   |
+| POST   | /api/products/search-by-name              | Search products by name          |
+| POST   | /api/products/search-by-price             | Filter products by price         |
+| POST   | /api/products/\:productId/add-stock       | Add stock to product             |
+| PATCH  | /api/products/\:productId/feature         | Toggle as featured               |
+| POST   | /api/products/\:productId/upload-images   | Upload or replace product images |
+| PATCH  | /api/products/\:productId/update-quantity | Update stock after order         |
+| DELETE | /api/products/\:productId/delete-image    | Delete specific image            |
+
+### 📆 Order Routes
+
+| Method | Endpoint                     | Description                   |
+| ------ | ---------------------------- | ----------------------------- |
+| POST   | /api/orders/checkout         | Checkout from cart            |
+| POST   | /api/orders/buy-now          | Direct order                  |
+| POST   | /api/orders/buy-again        | Reorder from history          |
+| GET    | /api/orders/my-orders        | View logged-in user's orders  |
+| GET    | /api/orders/all-orders       | Admin view of all orders      |
+| PATCH  | /api/orders/\:orderId/cancel | Cancel order                  |
+| PATCH  | /api/orders/update-status    | Admin: update delivery status |
+
 ---
 
-## 🪡 Key Features by Module
+## 🧩 Key Features by Module
 
 ### 👤 User
 
-* Register, confirm email, resend code
-* CAPTCHA-verified login with optional code
+* Register, confirm, resend code
+* CAPTCHA login with optional OTP
 * Upload profile photo
-* Change password or username
-* Promote to admin (admin-only)
+* Change password/username
+* Promote to admin
 
 ### 🛒 Product
 
-* Add, update, archive/activate product
-* Manage images & stock per variant
-* Search by name or price range
-* Toggle featured products
+* Add, update, archive/activate
+* Cloudinary image upload
+* Stock control
+* Search by name/price
+* Mark as featured
 
 ### 🛒 Cart
 
-* Add item (check variant stock)
-* Update item quantity
-* Remove or clear cart
-* Recalculate total in real time
+* Add/remove items
+* Update quantity
+* Checkout
+* Recalculate totals in real-time
 
 ### 📆 Orders
 
-* Place order (from cart or buy now)
-* Admin status update: pending → shipped
-* Cancel order (restores stock)
-* Buy again using past orders
+* Place, reorder, or cancel orders
+* Admin order status updates
 
 ### 🚚 Delivery
 
-* Save or update delivery info (name, tag, notes)
-* Fetch own details or all (admin)
-* Delete outdated delivery data
+* Manage delivery addresses
+* Admin can view/remove outdated entries
 
 ### 📝 Reviews
 
-* Review only after delivery
-* Anonymous option, image upload
-* Tag support and star rating
-* Vote helpful/unhelpful
-* Admin reply, hide, delete, report review
+* Submit after delivery only
+* Anonymity, image uploads, tags
+* Helpful/unhelpful voting
+* Admin moderation
 
 ### 💖 Wishlist
 
-* Add or remove products
-* Fetch entire wishlist
-* Check if item is in wishlist
+* Add/remove/view wishlisted items
+* Check item status
 
----
+### 🔐 Authentication & Authorization
 
-## 🔐 Authentication & Authorization
-
-* JWT issued after login: `Authorization: Bearer <token>`
-* Middleware flow:
-
-  1. `verify` → decode and attach `req.user`
-  2. `isLoggedIn`, `verifyAdmin`, or `verifyUser`
+* JWT Auth: `Authorization: Bearer <token>`
+* Middleware chain:
 
 ```js
-// Example
-app.get("/api/orders/user", verify, isLoggedIn, getUserOrders);
+app.get("/api/orders/my-orders", verify, verifyUser, getOrders);
 ```
 
----
+| Middleware  | Description         |
+| ----------- | ------------------- |
+| verify      | Auth via JWT        |
+| verifyUser  | Regular user access |
+| verifyAdmin | Admin-only access   |
 
-## 📢 WebSocket (Socket.io)
+### 📢 WebSocket (Socket.io)
 
-* Listens on new order creation
-* Emits live updates for admin dashboard
+* Live updates on:
 
----
+  * New orders
+  * Stock events
+  * Admin dashboard changes
 
-## 🛏️ CAPTCHA (Login Security)
+### 🛏️ CAPTCHA (Login Security)
 
-* Uses Google reCAPTCHA v3 (score-based)
-* Denies login if score < 0.5
-* Verified during login endpoint
+* reCAPTCHA v3 (score-based)
+* Minimum threshold: 0.5
+* Applied to `/login` endpoint
 
----
+### 🧪 API Testing
 
-## 🧪 API Testing
+* Fully tested via Postman
+* Auth + no-auth flows
+* Edge cases handled
+* Includes media & validation testing
 
-* All controllers tested using **Postman**
-* Includes:
-
-  * Successful responses
-  * Edge case handling
-  * Authenticated/unauthenticated flows
-
----
-
-## 🌐 Deployment
-
-* Backend is deployed via **Render**
-* Cloudinary handles asset uploads
-* MongoDB Atlas is used for cloud database
-
----
-
-## 🗃️ Error Handling
-
-Standard error response format:
+### 🗃️ Error Handling
 
 ```json
 {
@@ -246,44 +292,21 @@ Standard error response format:
 }
 ```
 
-All errors are centralized using middleware in `auth.js`.
+Handled via centralized middleware.
 
----
+### 📊 Admin Dashboard Summary API
 
-## 📊 Admin Dashboard Summary API
+* **Endpoint:** `/api/admin/summary`
+* **Supports:**
 
-### Endpoint: `/api/admin/summary`
+  * `daily` (with date)
+  * `monthly` (with month, year)
+  * `yearly` (with year)
+* **Returns:**
 
-Supports filtering by:
-
-* `daily` (requires `date`)
-* `monthly` (requires `month` & `year`)
-* `yearly` (requires `year`)
-
-Returns:
-
-* Total sales
-* Order summary (status breakdown)
-* Best-selling products
-* Monthly sales graph data
-* Recent orders
-* Total users with orders
-
----
-
-## 🎓 Contributing
-
-PRs welcome! Please open an issue first for feature suggestions or bugs.
-
----
-
-## 📄 License
-
-MIT — free for personal/commercial use with credit.
-
----
-
-## ✨ Maintainers
-
-* [DCD Foods Franchising](https://github.com/dcdfoodsfranchising)
-* Backend by: `@yournamehere`
+  * Total sales
+  * Order status breakdown
+  * Bestsellers
+  * Sales graph data
+  * Recent orders
+  * Total ordering users
